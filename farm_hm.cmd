@@ -26,30 +26,32 @@ echo   FARMING HERO MERIT...
 :: Function output container.
 set "foutput="
 
-:: Low row of buttons on the FEH gui as a percentage * 100
-set "bottom_row=964"
-set "homeb=65"
-set "battleb=250"
-set "alliesb=407"
-set "summonb=588"
-set "shopb=750"
-set "miscb=926"
+:: Low row of buttons on the FEH gui as a percentage * 1000
+set "bottom_row=960"
+set "homeb=78"
+set "battleb=245"
+set "alliesb=413"
+set "summonb=581"
+set "shopb=748"
+set "miscb=916"
 
 :: Battle screen options
 set "left_battle_column=234"
 set "right_battle_column=750"
-set "blessedg=250"
-set "specialmaps=250"
-set "storymaps=500"
-set "arenaduels=500"
-set "trainingt=750"
-set "events=750"
+set "blessedgb=250"
+set "specialmapsb=250"
+set "storymapsb=500"
+set "arenaduelsb=500"
+set "trainingtb=750"
+set "eventsb=750"
 
 adb devices > nul
 
 ::loop
+::call :alliesscreen
+::call :editteams
 call :battlescreen
-call :enterghb
+call :specialmaps
 goto:eof
 
 :alliesscreen
@@ -58,20 +60,6 @@ goto:eof
 
 :battlescreen
 	call :gotoscreen %battleb%
-	goto:eof
-
-:enterghb
-	:: Calculate the right column pixel value
-	call :getpixelvalue %right_battle_column% %width%
-	set "x=!foutput!"
-
-	:: Calculate the pixel value for the special maps battle option
-	call :getpixelvalue %specialmaps% %height%
-	set "y=!foutput!"
-
-	:: Go to the special maps screen
-	adb shell input tap !x! !y!
-	timeout /t 1 > nul
 	goto:eof
 
 :: Helper subroutine for selecting a bottom row button on the FEH gui.
@@ -92,7 +80,23 @@ goto:eof
 	timeout /t 1 > nul
 	goto:eof
 
-:: Converts percentage values to pixel values that can be used by adb
+:: Specialty subroutine for the :battlescreen subroutine to enter the special maps
+:specialmaps
+	:: Calculate the right column pixel value
+	call :getpixelvalue %right_battle_column% %width%
+	set "x=!foutput!"
+
+	:: Calculate the pixel value for the special maps battle option
+	call :getpixelvalue %specialmapsb% %height%
+	set "y=!foutput!"
+
+	:: Go to the special maps screen
+	adb shell input tap !x! !y!
+	timeout /t 1 > nul
+	goto:eof
+
+:: Converts the custom percentage values defined above
+:: to pixel values that can be used by adb
 :getpixelvalue
 	set "coord=%1"
 	if [%1]==[] (
