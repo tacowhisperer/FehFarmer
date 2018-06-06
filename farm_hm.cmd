@@ -52,18 +52,12 @@ call :battlescreen
 call :enterghb
 goto:eof
 
+:alliesscreen
+	call :gotoscreen %alliesb%
+	goto:eof
+
 :battlescreen
-	:: Calculate the battle button pixel value
-	call :getpixelvalue %battleb% %width%
-	set "x=!foutput!"
-
-	:: Calculate the bottom row pixel value
-	call :getpixelvalue %bottom_row% %height%
-	set "y=!foutput!"
-
-	:: Go to the battle screen
-	adb shell input tap !x! !y!
-	timeout /t 1 > nul
+	call :gotoscreen %battleb%
 	goto:eof
 
 :enterghb
@@ -76,6 +70,24 @@ goto:eof
 	set "y=!foutput!"
 
 	:: Go to the special maps screen
+	adb shell input tap !x! !y!
+	timeout /t 1 > nul
+	goto:eof
+
+:: Helper subroutine for selecting a bottom row button on the FEH gui.
+:gotoscreen
+	:: Get the selected button's x-coordinate
+	set "screenb=%1"
+	if [%1]==[] (
+		set "screenb=%homeb%"
+	)
+	call :getpixelvalue !screenb! %width%
+	set "x=!foutput!"
+
+	call :getpixelvalue %bottom_row% %height%
+	set "y=!foutput!"
+
+	:: Send the command over adb
 	adb shell input tap !x! !y!
 	timeout /t 1 > nul
 	goto:eof
