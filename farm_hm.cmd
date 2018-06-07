@@ -51,6 +51,7 @@ set "eventsb=750"
 set "specialmapsb_offset=333"
 set "specialmapsb_height=161"
 
+:: Initializes the daemon if it's not running already
 adb devices > nul
 
 :: Ensure that adb is in the same directory as this cmd file.
@@ -134,7 +135,7 @@ set "nfc_found="
 	:: Check if the app is already running to avoid the initialization subroutine.
 	adb shell "dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp'" | find "com.nintendo.zaba" > nul
 	if [%errorlevel%]==[0] (
-		goto loop
+		goto init
 	)
 
 	:: Attempt to start the app and make it focused if not already.
@@ -176,7 +177,7 @@ set "nfc_found="
 			adb shell input tap !x! !y!
 		)
 
-		goto loop
+		goto init
 	) else (
 		color 0C
 		mode 44, 11
@@ -200,7 +201,7 @@ set "nfc_found="
 
 	goto:eof
 
-:loop
+:init
 	color 07
 	mode 50, 3
 	cls
