@@ -5,10 +5,6 @@ setlocal EnableDelayedExpansion
 :: also assumes that you are neither currently in a battle nor have a
 :: shop item open.
 
-:: Input device width and height in pixels
-set /a "width=1080"
-set /a "height=1920"
-
 :: The team to farm with
 set "use_team_number=1"
 
@@ -20,6 +16,98 @@ set "farm_on_map=1"
 mode 50, 3
 echo.
 echo   INITIALIZING...
+
+:: Initializes the daemon if it's not running already
+adb devices > nul
+
+:: Ensure that adb is in the same directory as this cmd file.
+if [%errorlevel%]==[0] (
+	goto getscreensize
+) else (
+	color 0C
+	mode 34, 9
+	cls
+	echo.
+	echo  ERROR: ADB IS NOT FOUND!
+	echo.
+	echo  Add adb.exe and the appropriate
+	echo  accompanying .dll files from the
+	echo  download page and try again.
+
+	explorer "https://developer.android.com/studio/releases/platform-tools"
+
+	echo.
+	echo  Press any key to exit...
+	pause > nul
+	goto:eof
+)
+
+:: Obtains the screen size of the connected device in pixels
+:getscreensize
+	for /f "tokens=3 delims= " %%A in ('adb shell wm size') do set "phone_dim=%%A"
+	for /f "tokens=1,2 delims=x" %%A in ("%phone_dim%") do (
+		rem https://superuser.com/questions/404338/check-for-only-numerical-input-in-batch-file
+		set "width=%%A"
+		set "height=%%B"
+
+		set /a "width_num=width+0"
+		set /a "height_num=height+0"
+
+		if not [!width!]==[!width_num!] (
+			color 0C
+			mode 40, 26
+			cls
+			echo.
+			echo  ERROR: INVALID WIDTH DIMENSION!
+			echo.
+			echo  The adb connection to your phone
+			echo  found a bad value when attempting
+			echo  to get its width in pixels.
+			echo.
+
+			adb devices
+
+			echo.
+			echo  If the text above appears to have
+			echo  an error of some sort, check your
+			echo  connection or search the error
+			echo  on Google for a fix and try again.
+			echo.
+			echo  If you keep seeing this error, contact
+			echo  the developer and follow any ins-
+			echo  trunctions given to attempt to fix
+			echo  the issue.
+			echo.
+			echo  Press any key to exit...
+			pause > nul
+			exit
+		)
+
+		if not [!height!]==[!height_num!] (
+			color 0C
+			mode 37, 16
+			cls
+			echo.
+			echo  ERROR: INVALID HEIGHT DIMENSION!
+			echo.
+			echo  The adb connection to your phone
+			echo  found a bad value when attempting
+			echo  to get its height in pixels.
+			echo.
+			echo  Make sure that your phone is pro-
+			echo  perly connected and try again. If
+			echo  you keep seeing this error, contact
+			echo  the developer and follow any ins-
+			echo  trunctions given to attempt to fix
+			echo  the issue.
+			echo.
+			echo  Press any key to exit...
+			pause > nul
+			exit
+		)
+
+		goto checkunlocked
+	)
 
 :: Function output container.
 set "foutput="
@@ -50,31 +138,6 @@ set "eventsb=750"
 :: Special maps button heights as of v2.5.0
 set "specialmapsb_offset=333"
 set "specialmapsb_height=161"
-
-:: Initializes the daemon if it's not running already
-adb devices > nul
-
-:: Ensure that adb is in the same directory as this cmd file.
-if [%errorlevel%]==[0] (
-	goto checkunlocked
-) else (
-	color 0C
-	mode 34, 9
-	cls
-	echo.
-	echo  ERROR: ADB IS NOT FOUND!
-	echo.
-	echo  Add adb.exe and the appropriate
-	echo  accompanying .dll files from the
-	echo  download page and try again.
-
-	explorer "https://developer.android.com/studio/releases/platform-tools"
-
-	echo.
-	echo  Press any key to exit...
-	pause > nul
-	goto:eof
-)
 
 :: Ensure that the device is unlocked.
 set "unlock_tries=0"
@@ -132,14 +195,24 @@ set "nfc_found="
 
 :: Ensure that Fire Emblem Heroes is working correctly.
 :ensurefehworks
-	:: Check if the app is already running to avoid the initialization subroutine.
+	:: Check if the app is already running in the foreground to avoid the initialization subroutine.
 	adb shell "dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp'" | find "com.nintendo.zaba" > nul
 	if [%errorlevel%]==[0] (
 		goto init
 	)
 
+	:: Determine whether or not the app was simply running in the background.
+	set "feh_in_bg="
+	adb shell ps | find "com.nintendo.zaba" > nul
+	if [%errorlevel%]==[0] (
+		set "feh_in_bg=true"
+	)
+
 	:: Attempt to start the app and make it focused if not already.
-	adb shell monkey -p com.nintendo.zaba 1 | find "Events injected: 1" > nul
+	adb shell monkey -p com.nintendo.zaba 1 > nul
+
+	:: There is nothing else to do if the app was simply switched from the bg to the fg (assuming FEH is not on title screen)
+	if defined feh_in_bg goto init
 
 	color 07
 	mode 50, 4
@@ -159,18 +232,18 @@ set "nfc_found="
 		echo  Entering game...
 
 		:: Calculate the center of the screen and tap it
-		call :getpixelvalue 500 %width%
+		call :getpixelvalue 500 !width!
 		set "x=!foutput!"
-		call :getpixelvalue 500 %height%
+		call :getpixelvalue 500 !height!
 		set "y=!foutput!"
 		adb shell input tap !x! !y! > nul
 
 		timeout /t 15 /nobreak
 
 		:: Calculate the exit button for the notifications and tap it a few times
-		call :getpixelvalue %app_init_x% %width%
+		call :getpixelvalue %app_init_x% !width!
 		set "x=!foutput!"
-		call :getpixelvalue %app_init_y% %height%
+		call :getpixelvalue %app_init_y% !height!
 		set "y=!foutput!"
 
 		for /L %%i in (1,1,5) DO (
@@ -196,6 +269,7 @@ set "nfc_found="
 		echo.
 		echo  Press any key to exit...
 		pause > nul
+
 		exit
 	)
 
@@ -203,10 +277,10 @@ set "nfc_found="
 
 :init
 	color 07
-	mode 50, 3
+	mode 44, 3
 	cls
 	echo.
-	echo   FARMING HERO MERIT USING GIVEN SETTINGS...
+	echo  FARMING HERO MERIT USING GIVEN SETTINGS...
 	::call :alliesscreen
 	::call :editteams
 	call :battlescreen
@@ -228,10 +302,10 @@ set "nfc_found="
 	if [%1]==[] (
 		set "screenb=%homeb%"
 	)
-	call :getpixelvalue !screenb! %width%
+	call :getpixelvalue !screenb! !width!
 	set "x=!foutput!"
 
-	call :getpixelvalue %bottom_row% %height%
+	call :getpixelvalue %bottom_row% !height!
 	set "y=!foutput!"
 
 	:: Send the command over adb
@@ -242,11 +316,11 @@ set "nfc_found="
 :: Specialty subroutine for the :battlescreen subroutine to enter the special maps
 :specialmaps
 	:: Calculate the right column pixel value
-	call :getpixelvalue %right_battle_column% %width%
+	call :getpixelvalue %right_battle_column% !width!
 	set "x=!foutput!"
 
 	:: Calculate the pixel value for the special maps battle option
-	call :getpixelvalue %specialmapsb% %height%
+	call :getpixelvalue %specialmapsb% !height!
 	set "y=!foutput!"
 
 	:: Go to the special maps screen
@@ -273,3 +347,72 @@ set "nfc_found="
 	goto:eof
 
 endlocal
+
+:: Code that allows writing to the same line without limitations on characters an all Windows systems.
+:: Source:
+:: https://stackoverflow.com/questions/7105433/windows-batch-echo-without-new-line
+
+:: Writes the literal string Str to stdout without a terminating
+:: carriage return or line feed. Enclosing quotes are stripped.
+::
+:: This routine works by calling :writeVar
+:write	Str
+	setlocal disableDelayedExpansion
+	set "str=%~1"
+	call :writeVar str
+
+	exit /b
+
+:: Writes the value of variable StrVar to stdout without a terminating
+:: carriage return or line feed.
+::
+:: The routine relies on variables defined by :writeInitialize. If the
+:: variables are not yet defined, then it calls :writeInitialize to
+:: temporarily define them. Performance can be improved by explicitly
+:: calling :writeInitialize once before the first call to :writeVar
+:writeVar	StrVar
+	if not defined %~1 exit /b
+
+	setlocal EnableDelayedExpansion
+	if not defined $write.sub call :writeInitialize
+
+	set $write.special=1
+
+	if "!%~1:~0,1!" equ "^!" set "$write.special="
+	for /f delims^=^ eol^= %%A in ("!%~1:~0,1!") do (
+		if "%%A" neq "=" if "!$write.problemChars:%%A=!" equ "!$write.problemChars!" set "$write.special="
+	)
+
+	if not defined $write.special (
+		<nul set /p "=!%~1!"
+		exit /b
+	)
+
+	>"%$write.temp%_1.txt" (echo !str!!$write.sub!)
+	copy "%$write.temp%_1.txt" /a "%$write.temp%_2.txt" /b >nul
+	type "%$write.temp%_2.txt"
+	del "%$write.temp%_1.txt" "%$write.temp%_2.txt"
+	set "str2=!str:*%$write.sub%=%$write.sub%!"
+	if "!str2!" neq "!str!" <nul set /p "=!str2!"
+
+	exit /b
+
+:: Defines 3 variables needed by the :write and :writeVar routines
+::
+::   $write.temp - specifies a base path for temporary files
+::
+::   $write.sub  - contains the SUB character, also known as <CTRL-Z> or 0x1A
+::
+::   $write.problemChars - list of characters that cause problems for SET /P
+::      <carriageReturn> <formFeed> <space> <tab> <0xFF> <equal> <quote>
+::      Note that <lineFeed> and <equal> also causes problems, but are handled elsewhere
+:writeInitialize
+	set "$write.temp=%temp%\writeTemp%random%"
+	copy nul "%$write.temp%.txt" /a >nul
+	for /f "usebackq" %%A in ("%$write.temp%.txt") do set "$write.sub=%%A"
+	del "%$write.temp%.txt"
+	for /f %%A in ('copy /z "%~f0" nul') do for /f %%B in ('cls') do (
+		set "$write.problemChars=%%A%%B 	ÿ""
+	)
+
+	exit /b
