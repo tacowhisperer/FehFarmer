@@ -12,7 +12,40 @@ set "use_team_number=1"
 set "num_special_maps=7"
 set "farm_on_map=1"
 
+::::::::::::::::::::::::::::::::::::::::::::
 :: DO NOT MODIFY ANYTHING BELOW THIS LINE ::
+::::::::::::::::::::::::::::::::::::::::::::
+
+:: Function output container.
+set "foutput="
+
+:: Low row of buttons on the FEH gui as a percentage * 1000
+set "bottom_row=960"
+set "homeb=78"
+set "battleb=245"
+set "alliesb=413"
+set "summonb=581"
+set "shopb=748"
+set "miscb=916"
+
+:: First tap location
+set "app_init_x=916"
+set "app_init_y=885"
+
+:: Battle screen options
+set "left_battle_column=234"
+set "right_battle_column=750"
+set "blessedgb=250"
+set "specialmapsb=250"
+set "storymapsb=500"
+set "arenaduelsb=500"
+set "trainingtb=750"
+set "eventsb=750"
+
+:: Special maps button heights as of v2.5.0
+set "specialmapsb_offset=333"
+set "specialmapsb_height=161"
+
 mode 50, 3
 echo.
 echo   INITIALIZING...
@@ -106,46 +139,8 @@ if [%errorlevel%]==[0] (
 			exit
 		)
 
-		mode 50, 5
-		cls
-		echo.
-		echo  Detected a !width!x!height! device!
-		echo.
-		echo  Press any key to continue...
-		pause > nul
-
 		goto checkunlocked
 	)
-
-:: Function output container.
-set "foutput="
-
-:: Low row of buttons on the FEH gui as a percentage * 1000
-set "bottom_row=960"
-set "homeb=78"
-set "battleb=245"
-set "alliesb=413"
-set "summonb=581"
-set "shopb=748"
-set "miscb=916"
-
-:: First tap location
-set "app_init_x=916"
-set "app_init_y=885"
-
-:: Battle screen options
-set "left_battle_column=234"
-set "right_battle_column=750"
-set "blessedgb=250"
-set "specialmapsb=250"
-set "storymapsb=500"
-set "arenaduelsb=500"
-set "trainingtb=750"
-set "eventsb=750"
-
-:: Special maps button heights as of v2.5.0
-set "specialmapsb_offset=333"
-set "specialmapsb_height=161"
 
 :: Ensure that the device is unlocked.
 set "unlock_tries=0"
@@ -285,7 +280,7 @@ set "nfc_found="
 
 :init
 	color 07
-	mode 44, 10
+	mode 44, 3
 	cls
 	echo.
 	echo  FARMING HERO MERIT USING GIVEN SETTINGS...
@@ -296,12 +291,10 @@ set "nfc_found="
 	goto:eof
 
 :alliesscreen
-	echo  CALL TO ALLIES SCREEN.
 	call :gotoscreen %alliesb%
 	goto:eof
 
 :battlescreen
-	echo  CALL TO BATTLE SCREEN.
 	call :gotoscreen %battleb%
 	goto:eof
 
@@ -313,19 +306,14 @@ set "nfc_found="
 		set "screenb=%homeb%"
 	)
 	call :getpixelvalue !screenb! !width!
-	echo    ^> foutput x: !foutput!
 	set "x=!foutput!"
 
 	call :getpixelvalue %bottom_row% !height!
-	echo    ^> foutput y: !foutput!
 	set "y=!foutput!"
 
 	:: Send the command over adb
-	:: adb shell input tap !x! !y!
-	echo    ^> width: !width!; height: !height!
-	echo    ^> "adb shell input tap !x! !y!"
-	pause > nul
-	:: timeout /t 1 /nobreak > nul
+	adb shell input tap !x! !y! > nul
+	timeout /t 1 /nobreak > nul
 	goto:eof
 
 :: Specialty subroutine for the :battlescreen subroutine to enter the special maps
@@ -339,16 +327,13 @@ set "nfc_found="
 	set "y=!foutput!"
 
 	:: Go to the special maps screen
-	adb shell input tap !x! !y!
+	adb shell input tap !x! !y! > nul
 	timeout /t 1 /nobreak > nul
 	goto:eof
 
 :: Converts the custom percentage values defined above
 :: to pixel values that can be used by adb
 :getpixelvalue
-	echo ^%^~1: %~1
-	echo ^%^~2: %~2
-
 	set "coord=%~1"
 	if [%~1]==[] (
 		set "coord=0"
