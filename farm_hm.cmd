@@ -20,6 +20,7 @@ set "farm_on_map=1"
 set "foutput="
 
 :: Low row of buttons on the FEH gui as a percentage * 1000
+:: Note that these values are for 9:16 phones.
 set "bottom_row=960"
 set "homeb=78"
 set "battleb=245"
@@ -55,7 +56,29 @@ adb devices > nul
 
 :: Ensure that adb is in the same directory as this cmd file.
 if [%errorlevel%]==[0] (
-	goto getscreensize
+	rem Ensures that bc is in the right directory
+	bc -v > nul
+
+	if not [%errorlevel%]==[0] (
+		color 0C
+		mode 28, 9
+		cls
+		echo.
+		echo  ERROR: BC IS NOT FOUND!
+		echo.
+		echo  Add bc.exe and dc.exe from
+		echo  the download page and try
+		echo  again.
+
+		explorer "https://embedeo.org/ws/command_line/bc_dc_calculator_windows/bc-1.07.1-win32-embedeo-02.zip"
+
+		echo.
+		echo  Press any key to exit...
+		pause > nul
+		goto:eof
+	) else (
+		goto getscreensize
+	)
 ) else (
 	color 0C
 	mode 34, 9
@@ -348,5 +371,7 @@ set "nfc_found="
 	set /a "foutput/=1000"
 	
 	goto:eof
+
+
 
 endlocal
