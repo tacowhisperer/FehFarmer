@@ -1,4 +1,5 @@
 @echo off
+title FEH Farmer
 setlocal EnableDelayedExpansion
 
 :: This script assumes that you have adb in the same location, and it
@@ -16,18 +17,39 @@ set "farm_on_map=1"
 :: DO NOT MODIFY ANYTHING BELOW THIS LINE ::
 ::::::::::::::::::::::::::::::::::::::::::::
 
+:: Ensures that bc is in the right directory. The program may not continue if it cannot do math, duh...
+bc -v > nul
+
+if not [%errorlevel%]==[0] (
+	color 0C
+	mode 28, 9
+	cls
+	echo.
+	echo  ERROR: BC IS NOT FOUND!
+	echo.
+	echo  Add bc.exe and dc.exe from
+	echo  the download page and try
+	echo  again.
+
+	explorer "https://embedeo.org/ws/command_line/bc_dc_calculator_windows/bc-1.07.1-win32-embedeo-02.zip"
+
+	echo.
+	echo  Press any key to exit...
+	pause > nul
+	goto:eof
+)
+
 :: Function output container.
 set "foutput="
 
-:: Low row of buttons on the FEH gui as a percentage * 1000
-:: Note that these values are for 9:16 phones.
-set "bottom_row=960"
-set "homeb=78"
-set "battleb=245"
-set "alliesb=413"
-set "summonb=581"
-set "shopb=748"
-set "miscb=916"
+:: Low row of buttons on the FEH gui as a fraction based on the FEH gui display ratio
+for /f "tokens=*" %%i in ('"echo 1230 / 1280 | bc -l"') do set "bottom_row=%%i"
+for /f "tokens=*" %%i in ('"echo 66.00 / 740 | bc -l"') do set "homeb=%%i"
+for /f "tokens=*" %%i in ('"echo 187.5 / 740 | bc -l"') do set "battleb=%%i"
+for /f "tokens=*" %%i in ('"echo 308.5 / 740 | bc -l"') do set "alliesb=%%i"
+for /f "tokens=*" %%i in ('"echo 430.0 / 740 | bc -l"') do set "summonb=%%i"
+for /f "tokens=*" %%i in ('"echo 551.0 / 740 | bc -l"') do set "shopb=%%i"
+for /f "tokens=*" %%i in ('"echo 672.5 / 740 | bc -l"') do set "miscb=%%i"
 
 :: First tap location
 set "app_init_x=916"
@@ -56,29 +78,7 @@ adb devices > nul
 
 :: Ensure that adb is in the same directory as this cmd file.
 if [%errorlevel%]==[0] (
-	rem Ensures that bc is in the right directory
-	bc -v > nul
-
-	if not [%errorlevel%]==[0] (
-		color 0C
-		mode 28, 9
-		cls
-		echo.
-		echo  ERROR: BC IS NOT FOUND!
-		echo.
-		echo  Add bc.exe and dc.exe from
-		echo  the download page and try
-		echo  again.
-
-		explorer "https://embedeo.org/ws/command_line/bc_dc_calculator_windows/bc-1.07.1-win32-embedeo-02.zip"
-
-		echo.
-		echo  Press any key to exit...
-		pause > nul
-		goto:eof
-	) else (
-		goto getscreensize
-	)
+	goto getscreensize
 ) else (
 	color 0C
 	mode 34, 9
@@ -100,70 +100,287 @@ if [%errorlevel%]==[0] (
 
 :: Obtains the screen size of the connected device in pixels
 :getscreensize
-	for /f "tokens=3 delims= " %%A in ('adb shell wm size') do set "phone_dim=%%A"
-	for /f "tokens=1,2 delims=x" %%A in ("%phone_dim%") do (
-		rem https://superuser.com/questions/404338/check-for-only-numerical-input-in-batch-file
-		set "width=%%A"
-		set "height=%%B"
+	:: First we get the screen size and navigation bar dimensions
+	for /f "tokens=*" %%i in ('"adb shell dumpsys window displays | findstr /R /C:cur=.*app="') do set "phone_info=%%i"
 
-		set /a "width_num=width+0"
-		set /a "height_num=height+0"
+	:: Attempt to obtain the screen size information using the other adb method, but without the navbar size.
+	if not defined phone_info (
+		for /f "tokens=3 delims= " %%A in ('adb shell wm size') do set "phone_dim=%%A"
+		for /f "tokens=1,2 delims=x" %%A in ("!phone_dim!") do (
+			rem https://superuser.com/questions/404338/check-for-only-numerical-input-in-batch-file
+			set "width=%%A"
+			set "height=%%B"
+			set "navheight=0"
 
-		if not [!width!]==[!width_num!] (
-			color 0C
-			mode 40, 26
-			cls
-			echo.
-			echo  ERROR: INVALID WIDTH DIMENSION!
-			echo.
-			echo  The adb connection to your phone
-			echo  found a bad value when attempting
-			echo  to get its width in pixels.
-			echo.
+			set /a "width_num=width+0"
+			set /a "height_num=height+0"
 
-			adb devices
+			if not [!width!]==[!width_num!] (
+				color 0C
+				mode 40, 26
+				cls
+				echo.
+				echo  ERROR: INVALID WIDTH DIMENSION!
+				echo.
+				echo  The adb connection to your phone
+				echo  found a bad value when attempting
+				echo  to get its width in pixels.
+				echo.
 
-			echo.
-			echo  If the text above appears to have
-			echo  an error of some sort, check your
-			echo  connection or search the error
-			echo  on Google for a fix and try again.
-			echo.
-			echo  If you keep seeing this error, contact
-			echo  the developer and follow any ins-
-			echo  trunctions given to attempt to fix
-			echo  the issue.
-			echo.
-			echo  Press any key to exit...
-			pause > nul
-			exit
+				adb devices
+
+				echo.
+				echo  If the text above appears to have
+				echo  an error of some sort, check your
+				echo  connection or search the error
+				echo  on Google for a fix and try again.
+				echo.
+				echo  If you keep seeing this error, contact
+				echo  the developer and follow any ins-
+				echo  tructions given to attempt to fix
+				echo  the issue.
+				echo.
+				echo  Press any key to exit...
+				pause > nul
+				exit
+			)
+
+			if not [!height!]==[!height_num!] (
+				color 0C
+				mode 37, 16
+				cls
+				echo.
+				echo  ERROR: INVALID HEIGHT DIMENSION!
+				echo.
+				echo  The adb connection to your phone
+				echo  found a bad value when attempting
+				echo  to get its height in pixels.
+				echo.
+				echo  Make sure that your phone is pro-
+				echo  perly connected and try again. If
+				echo  you keep seeing this error, contact
+				echo  the developer and follow any ins-
+				echo  tructions given to attempt to fix
+				echo  the issue.
+				echo.
+				echo  Press any key to exit...
+				pause > nul
+				exit
+			)
+
+			goto checkunlocked
 		)
-
-		if not [!height!]==[!height_num!] (
-			color 0C
-			mode 37, 16
-			cls
-			echo.
-			echo  ERROR: INVALID HEIGHT DIMENSION!
-			echo.
-			echo  The adb connection to your phone
-			echo  found a bad value when attempting
-			echo  to get its height in pixels.
-			echo.
-			echo  Make sure that your phone is pro-
-			echo  perly connected and try again. If
-			echo  you keep seeing this error, contact
-			echo  the developer and follow any ins-
-			echo  trunctions given to attempt to fix
-			echo  the issue.
-			echo.
-			echo  Press any key to exit...
-			pause > nul
-			exit
-		)
-
-		goto checkunlocked
 	)
+
+	:: Separate the information by spaces and get the relevant bits of information
+	:: Format: init=####x#### ####dpi cur=####x#### app=####x#### rng=####x####-####x####
+	for /f "tokens=1,5" %%i in ("!phone_info!") do (
+		set "phone_dim_raw=%%i"
+		set "phone_navbar_raw=%%j"
+
+		rem Handle the case where the phone's dimensions are not correctly obtained
+		if not defined phone_dim_raw (
+			color 0C
+			mode 39, 15
+			cls
+			echo.
+			echo  ERROR: PARSE FAILURE^^!
+			echo.
+			echo  The output format for the command
+			echo.
+			echo  'adb shell dumpsys window displays'
+			echo.
+			echo  was not the expected format for the
+			echo  screen dimensions. Check that the
+			echo  connection to the phone was not
+			echo  broken and that adb was still working
+			echo  and try again.
+			echo.
+			echo  Press any key to exit...
+			pause > nul
+			exit
+		)
+
+		rem Handle the case where the phone's navbar dimensions are not correctly obtained
+		if not defined phone_navbar_raw (
+			color 0C
+			mode 39, 15
+			cls
+			echo.
+			echo  ERROR: PARSE FAILURE^^!
+			echo.
+			echo  The output format for the command
+			echo.
+			echo  'adb shell dumpsys window displays'
+			echo.
+			echo  was not the expected format for the
+			echo  screen navbar. Check that the
+			echo  connection to the phone was not
+			echo  broken and that adb was still working
+			echo  and try again.
+			echo.
+			echo  Press any key to exit...
+			pause > nul
+			exit
+		)
+
+		rem Process the phone's screen dimensions
+		for /f "tokens=2 delims==" %%i in ("!phone_dim_raw!") do (
+			set "phone_dim=%%i"
+
+			rem Handle the case where the phone's dimension values are not = delimited
+			if not defined phone_dim (
+				color 0C
+				mode 33, 13
+				cls
+				echo.
+				echo  ERROR: FATAL PARSE FAILURE^^!
+				echo.
+				echo  The output format for the phone
+				echo  screen dimensions in pixels is
+				echo  not stored as a key=value pair.
+				echo.
+				echo  Your version of Android may not
+				echo  be compatible with the version
+				echo  of adb installed.
+				echo.
+				echo  Press any key to exit...
+				pause > nul
+				exit
+			)
+
+			rem Split the width and the height values and ensure that they are numerical
+			for /f "tokens=1,2 delims=x" %%a in ("!phone_dim!") do (
+				set "width=%%a"
+				set "height=%%b"
+
+				call :isnumerical !width!
+				if "!foutput!"=="false" (
+					color 0C
+					mode 40, 13
+					cls
+					echo.
+					echo  ERROR: NON-NUMERICAL VALUE OBTAINED
+					echo.
+					echo  The script encountered a non-numerical
+					echo  value while trying to get the device 
+					echo  width in pixels.
+					echo.
+					echo  Your Android version might not be com-
+					echo  patible with the currently installed
+					echo  version of adb.
+					echo.
+					echo  Press any key to exit...
+					pause > nul
+					exit
+				)
+
+				call :isnumerical !height!
+				if "!foutput!"=="false" (
+					color 0C
+					mode 40, 13
+					cls
+					echo.
+					echo  ERROR: NON-NUMERICAL VALUE OBTAINED
+					echo.
+					echo  The script encountered a non-numerical
+					echo  value while trying to get the device 
+					echo  height in pixels.
+					echo.
+					echo  Your Android version might not be com-
+					echo  patible with the currently installed
+					echo  version of adb.
+					echo.
+					echo  Press any key to exit...
+					pause > nul
+					exit
+				)
+			)
+		)
+
+		rem Process the phone's screen navbar dimensions
+		for /f "tokens=2 delims==" %%i in ("!phone_navbar_raw!") do (
+			set "phone_navbar_range=%%i"
+
+			rem Handle the case where the phone's navbar dimension values are not = delimited
+			if not defined phone_navbar_range (
+				set "phone_navbar_range=0x0-0x0"
+
+				color 0E
+				mode 34, 18
+				cls
+				echo.
+				echo  WARNING: PARSE FAILURE
+				echo.
+				echo  The output format for the phone
+				echo  screen's navbar in pixels is
+				echo  not stored as a key=value pair.
+				echo.
+				echo  Your version of Android may not
+				echo  be compatible with the version
+				echo  of adb installed.
+				echo.
+				echo  The script will continue, but
+				echo  beware that there may be unknown
+				echo  errors when calculating screen
+				echo  tap values.
+				echo.
+				echo  Press any key to continue...
+				pause > nul
+			)
+
+			rem Obtain the first y-tap-coordinate for the navigation bar
+			for /f "tokens=2 delims=-" %%i in ("!phone_navbar_range!") do (
+				set "phone_navbar_vals=%%i"
+
+				for /f "tokens=1 delims=x" %%i in ("!phone_navbar_vals!") do (
+					set "navheight=%%i"
+				)
+
+				REM Ensure that the navbar height value is numerical
+				call :isnumerical !navheight!
+				if "!foutput!"=="false" (
+					set "navheight=0"
+
+					color 0E
+					mode 34, 18
+					cls
+					echo.
+					echo  WARNING: BAD NAVHEIGHT VALUE
+					echo.
+					echo  The output format for the phone
+					echo  screen's navbar in pixels was
+					echo  not read as a numerical value.
+					echo.
+					echo  Your version of Android may not
+					echo  be compatible with the version
+					echo  of adb installed.
+					echo.
+					echo  The script will continue, but
+					echo  beware that there may be unknown
+					echo  errors when calculating screen
+					echo  tap values.
+					echo.
+					echo  Press any key to continue...
+					pause > nul
+				)
+			)
+		)
+	)
+
+	goto:eof
+
+:: Checks that the argument given is a numerical value
+:isnumerical
+	set /a "numerical_test_value=%~1+0"
+
+	if [!numerical_test_value!]==[%~1] (
+		set "foutput=%~1"
+		goto:eof
+	)
+
+	set "foutput=false"
+	goto:eof
 
 :: Ensure that the device is unlocked.
 set "unlock_tries=0"
