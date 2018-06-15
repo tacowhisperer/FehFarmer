@@ -585,7 +585,7 @@ set "nfc_found="
 		set "dim=0"
 	)
 
-	for /f "tokens=*" %%i in ('"echo !coord! * !dim! | bc -l | bc"') do set "foutput=%%i"	
+	for /f "tokens=*" %%i in ('"echo v=(!coord! * !dim!);scale=0;v/1 | bc -l"') do set "foutput=%%i"	
 	goto:eof
 
 :: Checks that the argument given is a numerical value
