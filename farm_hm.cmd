@@ -20,7 +20,7 @@ set "farm_on_map=1"
 :: Ensures that bc is in the right directory. The program may not continue if it cannot do math, duh...
 bc -v > nul
 
-if not [%errorlevel%]==[0] (
+if not "%errorlevel%" == "0" (
 	color 0C
 	mode 28, 9
 	cls
@@ -72,6 +72,9 @@ set "specialmapsb_height=161"
 mode 50, 3
 echo.
 echo   INITIALIZING...
+
+:: Prevent a pop-up and unwanted text from showing up to the terminal
+start cmd /c "adb devices" /b
 
 :: Initializes the daemon if it's not running already
 adb devices > nul
@@ -337,10 +340,10 @@ if "%errorlevel%" == "0" (
 					set "navheight=%%i"
 				)
 
-				REM Ensure that the navbar height value is numerical
+				rem Ensure that the navbar height value is numerical
 				call :isnumerical !navheight!
 				if "!foutput!"=="false" (
-					set "navheight=0"
+					set "navheight=!height!"
 
 					color 0E
 					mode 34, 18
@@ -364,24 +367,21 @@ if "%errorlevel%" == "0" (
 					echo  Press any key to continue...
 					pause > nul
 				)
+
+				rem Change the navheight value to be a height rather than a coordinate
+				set /a "navheight=height-navheight"
 			)
 		)
+
+		timeout /t 3 /nobreak > nul
+		cls
+		echo.
+		echo  Detected device: !width!x!navheight!-!height!px
+		timeout /t 2 /nobreak > nul
 
 		goto checkunlocked
 	)
 	
-	goto:eof
-
-:: Checks that the argument given is a numerical value
-:isnumerical
-	set /a "numerical_test_value=%~1+0"
-
-	if [!numerical_test_value!]==[%~1] (
-		set "foutput=%~1"
-		goto:eof
-	)
-
-	set "foutput=false"
 	goto:eof
 
 :: Ensure that the device is unlocked.
@@ -573,8 +573,7 @@ set "nfc_found="
 	timeout /t 1 /nobreak > nul
 	goto:eof
 
-:: Converts the custom percentage values defined above
-:: to pixel values that can be used by adb
+:: Converts decimal values to pixel values over a fixed-size dimension that can be sent over adb.
 :getpixelvalue
 	set "coord=%~1"
 	if [%~1]==[] (
@@ -586,11 +585,41 @@ set "nfc_found="
 		set "dim=0"
 	)
 
-	set /a "foutput=coord*dim"
-	set /a "foutput/=1000"
-	
+	for /f "tokens=*" %%i in ('"echo !coord! * !dim! | bc -l | bc"') do set "foutput=%%i"	
 	goto:eof
 
+:: Checks that the argument given is a numerical value
+:isnumerical
+	set /a "numerical_test_value=%~1+0"
 
+	if [!numerical_test_value!]==[%~1] (
+		set "foutput=%~1"
+		goto:eof
+	)
+
+	set "foutput=false"
+	goto:eof
+
+:: Calculates a random value between the provided values
+:randrange
+	set "b=%~1"
+	set "a=%~2"
+
+	call :isnumerical !b!
+	if "!foutput!" == "false" set "b=0"
+
+	call :isnumerical !a!
+	if "!foutput!" == "false" set "a=1"
+
+	:: Set a random value between 0 and 1 inclusive to p
+	for /f "tokens=*" %%i in ('"echo %random% / 32797 | bc -l"') do set "p=%%i"
+
+	:: Set the complementary value to q
+	for /f "tokens=*" %%i in ('"echo 1 - !p! | bc -l"') set "q=%%i"
+
+	:: Interpolate and set the output value for the function
+	for /f "tokens=*" %%i in ('"echo !p! * !a! + !q! * !b! | bc -l"') set "foutput=%%i"
+
+	goto:eof
 
 endlocal
