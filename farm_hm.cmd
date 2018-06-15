@@ -77,7 +77,7 @@ echo   INITIALIZING...
 adb devices > nul
 
 :: Ensure that adb is in the same directory as this cmd file.
-if [%errorlevel%]==[0] (
+if "%errorlevel%" == "0" (
 	goto getscreensize
 ) else (
 	color 0C
@@ -366,8 +366,10 @@ if [%errorlevel%]==[0] (
 				)
 			)
 		)
-	)
 
+		goto checkunlocked
+	)
+	
 	goto:eof
 
 :: Checks that the argument given is a numerical value
