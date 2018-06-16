@@ -36,7 +36,22 @@ if not "%errorlevel%" == "0" (
 )
 
 :: Function output container.
-set "foutput="
+set "foutput=null"
+
+:: Fire Emblem...*inhales*... HEROES!!!
+set "welcome_x_fui=0.5"
+set "welcome_y_fui=0.75"
+
+:: Banners available pop-up coordinates to close the screen
+set "banner_x_fui=0.5"
+for /f "tokens=*" %%i in ('"echo 1073 / 1280 | bc -l"') do set "banner_y_fui=%%i"
+
+:: Notifications from Nintendo using the phone user interface (pui)
+for /f "tokens=*" %%i in ('"echo 985 / 1080 | bc -l"') do set "notifications_x_pui=%%i"
+
+:: Celebration bonuses (big golden screens with the bread of every day)
+set "celebration_bonus_x=0.5"
+for /f "tokens=*" %%i in ('"echo 1002 / 1280 | bc -l"') do set "celebration_bonus_y=%%i"
 
 :: Bottom row of buttons on the main FEH user interface (fui).
 :: These are fractional values based on the FUI display ratio (37:64)
@@ -110,6 +125,7 @@ if "%errorlevel%" == "0" (
 	echo.
 	echo  Press any key to exit...
 	pause > nul
+
 	goto:eof
 )
 
