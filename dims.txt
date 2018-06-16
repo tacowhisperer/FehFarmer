@@ -6,3 +6,9 @@ Google Pixel Dimensions
 
 Fire Emblem Heroes Game Ratio
 	37:64 = 1.729729729729729729729729729729729729729729729729729729729729729729729729730
+
+Fire Emblem Heroes Opening Sequence:
+	1.) Touch to start screen
+	2.) Currently active banner information
+	3.) Notifications popup
+	4.)
