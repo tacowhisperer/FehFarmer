@@ -2,10 +2,6 @@
 title FEH Farmer
 setlocal EnableDelayedExpansion
 
-:: This script assumes that you have adb in the same location, and it
-:: also assumes that you are neither currently in a battle nor have a
-:: shop item open.
-
 :: The team to farm with
 set "use_team_number=1"
 
@@ -42,14 +38,15 @@ if not "%errorlevel%" == "0" (
 :: Function output container.
 set "foutput="
 
-:: Low row of buttons on the FEH gui as a fraction based on the FEH gui display ratio
-for /f "tokens=*" %%i in ('"echo 1230 / 1280 | bc -l"') do set "bottom_row=%%i"
-for /f "tokens=*" %%i in ('"echo 66.00 / 740 | bc -l"') do set "homeb=%%i"
-for /f "tokens=*" %%i in ('"echo 187.5 / 740 | bc -l"') do set "battleb=%%i"
-for /f "tokens=*" %%i in ('"echo 308.5 / 740 | bc -l"') do set "alliesb=%%i"
-for /f "tokens=*" %%i in ('"echo 430.0 / 740 | bc -l"') do set "summonb=%%i"
-for /f "tokens=*" %%i in ('"echo 551.0 / 740 | bc -l"') do set "shopb=%%i"
-for /f "tokens=*" %%i in ('"echo 672.5 / 740 | bc -l"') do set "miscb=%%i"
+:: Bottom row of buttons on the main FEH user interface (fui).
+:: These are fractional values based on the FUI display ratio (37:64)
+for /f "tokens=*" %%i in ('"echo 1230 / 1280 | bc -l"') do set "bottom_row_fui=%%i"
+for /f "tokens=*" %%i in ('"echo 66.00 / 740 | bc -l"') do set "home_fui=%%i"
+for /f "tokens=*" %%i in ('"echo 187.5 / 740 | bc -l"') do set "battle_fui=%%i"
+for /f "tokens=*" %%i in ('"echo 308.5 / 740 | bc -l"') do set "allies_fui=%%i"
+for /f "tokens=*" %%i in ('"echo 430.0 / 740 | bc -l"') do set "summon_fui=%%i"
+for /f "tokens=*" %%i in ('"echo 551.0 / 740 | bc -l"') do set "shop_fui=%%i"
+for /f "tokens=*" %%i in ('"echo 672.5 / 740 | bc -l"') do set "misc_fui=%%i"
 
 :: First tap location
 set "app_init_x=916"
@@ -69,6 +66,16 @@ set "eventsb=750"
 set "specialmapsb_offset=333"
 set "specialmapsb_height=161"
 
+:: adb screen rotation values
+set "portrait_orientation=0"
+set "landscape_orientation=1"
+set "portrait_reversed_orientation=2"
+set "landscape_reversed_orientation=3"
+
+:: adb accelerometer values
+set "stay_in_current_rotation=0"
+set "rotate_screen_content=1"
+
 mode 50, 3
 echo.
 echo   INITIALIZING...
@@ -81,6 +88,11 @@ adb devices > nul
 
 :: Ensure that adb is in the same directory as this cmd file.
 if "%errorlevel%" == "0" (
+	rem First set the screen orientation to be portrait
+	rem Source: https://stackoverflow.com/questions/25864385/changing-android-device-orientation-with-adb
+	adb shell settings put system accelerometer_rotation %stay_in_current_rotation% > nul
+	adb shell settings put system user_rotation %portrait_orientation% > nul
+
 	goto getscreensize
 ) else (
 	color 0C
@@ -520,37 +532,17 @@ set "nfc_found="
 
 	goto:eof
 
-:init
-	color 07
-	mode 44, 3
-	cls
-	echo.
-	echo  FARMING HERO MERIT USING GIVEN SETTINGS...
-	::call :alliesscreen
-	::call :editteams
-	call :battlescreen
-	call :specialmaps
-	goto:eof
-
-:alliesscreen
-	call :gotoscreen %alliesb%
-	goto:eof
-
-:battlescreen
-	call :gotoscreen %battleb%
-	goto:eof
-
 :: Helper subroutine for selecting a bottom row button on the FEH gui.
-:gotoscreen
+:bottomrowselect
 	:: Get the selected button's x-coordinate
 	set "screenb=%~1"
 	if [%~1]==[] (
-		set "screenb=%homeb%"
+		set "screenb=%home_fui%"
 	)
 	call :getpixelvalue !screenb! !width!
 	set "x=!foutput!"
 
-	call :getpixelvalue %bottom_row% !height!
+	call :getpixelvalue %bottom_row_fui% !height!
 	set "y=!foutput!"
 
 	:: Send the command over adb
@@ -620,6 +612,22 @@ set "nfc_found="
 	:: Interpolate and set the output value for the function
 	for /f "tokens=*" %%i in ('"echo !p! * !a! + !q! * !b! | bc -l"') set "foutput=%%i"
 
+	goto:eof
+
+:init
+	color 07
+	mode 44, 3
+	cls
+	echo.
+	echo  FARMING HERO MERIT USING GIVEN SETTINGS...
+	
+	:: Initialization of the farming.
+	call :bottomrowselect %battle_fui%
+
+
+	goto:eof
+
+:loop
 	goto:eof
 
 endlocal
