@@ -560,22 +560,28 @@ set "nfc_found="
 		echo  Entering game...
 
 		:: Calculate the center of the screen and tap it
-		call :getpixelvalue 500 !width!
+		call :getpixelvalue %welcome_x_fui% !width!
 		set "x=!foutput!"
-		call :getpixelvalue 500 !height!
+		call :getpixelvalue %welcome_y_fui% !height!
 		set "y=!foutput!"
+
 		adb shell input tap !x! !y! > nul
 
-		timeout /t 15 /nobreak
+		timeout /t 18 /nobreak
 
 		:: Calculate the exit button for the notifications and tap it a few times
-		call :getpixelvalue %app_init_x% !width!
-		set "x=!foutput!"
-		call :getpixelvalue %app_init_y% !height!
-		set "y=!foutput!"
+		:: !navheight! !width! !height! !feh_width! !feh_height! %notifications_x_pui%
 
-		for /L %%i in (1,1,5) DO (
-			adb shell input tap !x! !y!
+		call :getpixelvalue %notifications_x_pui% !width!
+		set "x=!foutput!"
+		for /f "tokens=*" %%i in ('"echo v=(!height! - (1.5 * !navheight!));scale=0;v/1 | bc -l"') do set "y=%%i"
+
+		cls
+		echo.
+		echo  Tapping away notifications...
+
+		for /l %%i in (1,1,5) DO (
+			adb shell input tap !x! !y! > nul
 		)
 
 		goto init
@@ -613,7 +619,7 @@ set "nfc_found="
 	call :getpixelvalue !screenb! !width!
 	set "x=!foutput!"
 
-	call :getpixelvalue %bottom_row_fui% !height!
+	call :getpixelvalue %bottom_row_pui% !height!
 	set "y=!foutput!"
 
 	:: Send the command over adb
@@ -638,9 +644,9 @@ set "nfc_found="
 
 :: Converts decimal values to pixel values over a fixed-size dimension that can be sent over adb.
 :getpixelvalue
-	set "coord=%~1"
+	set "percentage=%~1"
 	if [%~1]==[] (
-		set "coord=0"
+		set "percentage=0"
 	)
 
 	set "dim=%~2"
@@ -648,7 +654,8 @@ set "nfc_found="
 		set "dim=0"
 	)
 
-	for /f "tokens=*" %%i in ('"echo v=(!coord! * !dim!);scale=0;v/1 | bc -l"') do set "foutput=%%i"	
+	for /f "tokens=*" %%i in ('"echo v=(!percentage! * !dim!);scale=0;v/1 | bc -l"') do set "foutput=%%i"
+
 	goto:eof
 
 :: Checks that the argument given is a numerical value
@@ -691,10 +698,9 @@ set "nfc_found="
 	cls
 	echo.
 	echo  FARMING HERO MERIT USING GIVEN SETTINGS...
-	
+
 	:: Initialization of the farming.
 	call :bottomrowselect %battle_fui%
-
 
 	goto:eof
 
