@@ -111,6 +111,15 @@ for /f "tokens=*" %%i in ('"echo 187.5 / 740 | bc -l"') do set "battle_fui=%%i"
 	set "events_x_fui=!right_battle_column_fui!"
 	set "events_y_pui=0.75"
 
+	:: Universal battle selection coordinates (diamond-shaped boxes)
+	:: These are used in many of the different battle selection screens right before
+	:: starting a battle.
+	set "universal_diamond_x_fui=0.5"
+	for /f "tokens=*" %%i in ('"echo 330 / 1280 | bc -l"') do set "universal_diamond_top_pui=%%i"
+	for /f "tokens=*" %%i in ('"echo 1138 / 1280 | bc -l"') do set "universal_diamond_bottom_pui=%%i"
+	for /f "tokens=*" %%i in ('"echo 190 / 1280 | bc -l"') do set "universal_diamond_height_pui=%%i"
+	for /f "tokens=*" %%i in ('"echo 30 / 1280 | bc -l"') do set "universal_diamond_margin_pui=%%i"
+
 :: Allies screen coordinates
 for /f "tokens=*" %%i in ('"echo 308.5 / 740 | bc -l"') do set "allies_fui=%%i"
 
