@@ -53,8 +53,8 @@ set "welcome_x_fui=0.5"
 set "welcome_y_fui=0.75"
 
 :: Banners available pop-up coordinates to close the screen
-set "banner_x_fui=0.5"
-for /f "tokens=*" %%i in ('"echo 1073 / 1280 | bc -l"') do set "banner_y_fui=%%i"
+set "banners_x_fui=0.5"
+for /f "tokens=*" %%i in ('"echo 1073 / 1280 | bc -l"') do set "banners_y_fui=%%i"
 
 :: Notifications from Nintendo using the phone user interface (pui)
 for /f "tokens=*" %%i in ('"echo 985 / 1080 | bc -l"') do set "notifications_x_pui=%%i"
@@ -67,33 +67,60 @@ for /f "tokens=*" %%i in ('"echo 1002 / 1280 | bc -l"') do set "celebration_bonu
 set "daily_login_bonus_x_fui=0.5"
 for /f "tokens=*" %%i in ('"echo 807.5 / 1280 | bc -l"') do set "daily_login_bonus_y_fui=%%i"
 
-:: Bottom row of buttons on the main FEH user interface (fui).
-:: These are fractional values based on the FUI display ratio (37:64)
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: Bottom row of buttons on the main FEH user interface (fui).        ::
+:: These are fractional values based on the FUI display ratio (37:64) ::
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 for /f "tokens=*" %%i in ('"echo 1230 / 1280 | bc -l"') do set "bottom_row_fui=%%i"
+
+:: Home screen coordinates
 for /f "tokens=*" %%i in ('"echo 66.00 / 740 | bc -l"') do set "home_fui=%%i"
+
+:: Battle screen coordinates
 for /f "tokens=*" %%i in ('"echo 187.5 / 740 | bc -l"') do set "battle_fui=%%i"
+	:: Column values
+	for /f "tokens=*" %%i in ('"echo 188 / 740 | bc -l"') do set "left_battle_column_fui=%%i"
+	for /f "tokens=*" %%i in ('"echo 542 / 740 | bc -l"') do set "right_battle_column_fui=%%i"
+
+	:: Blessed Gardens
+	set "blessedg_x_fui=!left_battle_column_fui!"
+	set "blessedg_y_fui=0.25"
+
+	:: Special Maps
+	set "specialmaps_x_fui=!right_battle_column_fui!"
+	set "specialmaps_y_fui=0.25"
+
+	:: Story Maps
+	set "storymaps_x_fui=!left_battle_column_fui!"
+	set "storymaps_y_fui=0.5"
+
+	:: Arena Duels
+	set "arenaduels_x_fui=!right_battle_column_fui!"
+	set "arenaduels_y_fui=0.5"
+
+	:: Training Tower
+	set "trainingt_x_fui=!left_battle_column_fui!"
+	set "trainingt_y_fui=0.75"
+
+	:: Events
+	set "events_x_fui=!right_battle_column_fui!"
+	set "events_y_fui=0.75"
+
+:: Allies screen coordinates
 for /f "tokens=*" %%i in ('"echo 308.5 / 740 | bc -l"') do set "allies_fui=%%i"
+
+:: Summon screen coordinates
 for /f "tokens=*" %%i in ('"echo 430.0 / 740 | bc -l"') do set "summon_fui=%%i"
+
+:: Shop screen coordinates
 for /f "tokens=*" %%i in ('"echo 551.0 / 740 | bc -l"') do set "shop_fui=%%i"
+
+:: Misc. screen coordinates
 for /f "tokens=*" %%i in ('"echo 672.5 / 740 | bc -l"') do set "misc_fui=%%i"
 
 :: First tap location
 rem set "app_init_x=916"
 rem set "app_init_y=885"
-
-:: Battle screen options
-for /f "tokens=*" %%i in ('"echo 188 / 740 | bc -l"') do set "left_battle_column_fui=%%i"
-for /f "tokens=*" %%i in ('"echo 542 / 740 | bc -l"') do set "right_battle_column_fui=%%i"
-set "blessedgb_fui=0.25"
-set "specialmapsb_fui=0.25"
-set "storymapsb_fui=0.5"
-set "arenaduelsb_fui=0.5"
-set "trainingtb_fui=0.75"
-set "eventsb_fui=0.75"
-
-:: Special maps button heights as of v2.5.0
-set "specialmapsb_offset=333"
-set "specialmapsb_height=161"
 
 mode 50, 3
 echo.
@@ -133,7 +160,7 @@ if "%errorlevel%" == "0" (
 	goto:eof
 )
 
-:: Obtains the screen size of the connected device in pixels
+:: Obtains the screen size of the connected device in pixels (and the FEH screen size)
 :getscreensize
 	:: First we get the screen size and navigation bar dimensions
 	for /f "tokens=*" %%i in ('"adb shell dumpsys window displays | findstr /R /C:cur=.*app="') do set "phone_info=%%i"
@@ -202,6 +229,10 @@ if "%errorlevel%" == "0" (
 				pause > nul
 				exit
 			)
+
+			rem Also calculate the FEH screen size
+			for /f "tokens=*" %%i in ('"echo v=(37 / 64 * !height!);scale=0;v/1 | bc -l"') do set "feh_width=%%i"
+			set "feh_height=!height!"
 
 			goto checkunlocked
 		)
@@ -405,6 +436,10 @@ if "%errorlevel%" == "0" (
 			)
 		)
 
+		rem Also calculate the FEH screen size
+		for /f "tokens=*" %%i in ('"echo v=(37 / 64 * !height!);scale=0;v/1 | bc -l"') do set "feh_width=%%i"
+		set "feh_height=!height!"
+
 		timeout /t 3 /nobreak > nul
 		cls
 		echo.
@@ -446,6 +481,7 @@ set "nfc_found="
 			echo.
 			echo  Press any key to continue...
 			pause > nul
+
 			goto ensurefehworks
 		) else (
 			color 0C
@@ -464,6 +500,7 @@ set "nfc_found="
 			echo  Retrying...
 			set /a "unlock_tries+=1"
 			timeout /t 1 /nobreak > nul
+
 			goto checkunlocked
 		)
 	)
