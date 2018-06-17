@@ -41,6 +41,10 @@ set "landscape_orientation=1"
 set "portrait_reversed_orientation=2"
 set "landscape_reversed_orientation=3"
 
+:: adb accelerometer values
+set "stay_in_current_rotation=0"
+set "rotate_screen_content=1"
+
 :: Function output container.
 set "foutput=null"
 
@@ -90,10 +94,6 @@ set "eventsb_fui=0.75"
 :: Special maps button heights as of v2.5.0
 set "specialmapsb_offset=333"
 set "specialmapsb_height=161"
-
-:: adb accelerometer values
-set "stay_in_current_rotation=0"
-set "rotate_screen_content=1"
 
 mode 50, 3
 echo.
