@@ -35,6 +35,12 @@ if not "%errorlevel%" == "0" (
 	goto:eof
 )
 
+:: adb screen rotation values
+set "portrait_orientation=0"
+set "landscape_orientation=1"
+set "portrait_reversed_orientation=2"
+set "landscape_reversed_orientation=3"
+
 :: Function output container.
 set "foutput=null"
 
@@ -50,8 +56,12 @@ for /f "tokens=*" %%i in ('"echo 1073 / 1280 | bc -l"') do set "banner_y_fui=%%i
 for /f "tokens=*" %%i in ('"echo 985 / 1080 | bc -l"') do set "notifications_x_pui=%%i"
 
 :: Celebration bonuses (big golden screens with the bread of every day)
-set "celebration_bonus_x=0.5"
-for /f "tokens=*" %%i in ('"echo 1002 / 1280 | bc -l"') do set "celebration_bonus_y=%%i"
+set "celebration_bonus_x_fui=0.5"
+for /f "tokens=*" %%i in ('"echo 1002 / 1280 | bc -l"') do set "celebration_bonus_y_fui=%%i"
+
+:: Daily log-in bonus popup (usually dueling swords or feathers)
+set "daily_login_bonus_x_fui=0.5"
+for /f "tokens=*" %%i in ('"echo 807.5 / 1280 | bc -l"') do set "daily_login_bonus_y_fui=%%i"
 
 :: Bottom row of buttons on the main FEH user interface (fui).
 :: These are fractional values based on the FUI display ratio (37:64)
@@ -64,28 +74,22 @@ for /f "tokens=*" %%i in ('"echo 551.0 / 740 | bc -l"') do set "shop_fui=%%i"
 for /f "tokens=*" %%i in ('"echo 672.5 / 740 | bc -l"') do set "misc_fui=%%i"
 
 :: First tap location
-set "app_init_x=916"
-set "app_init_y=885"
+rem set "app_init_x=916"
+rem set "app_init_y=885"
 
 :: Battle screen options
-set "left_battle_column=234"
-set "right_battle_column=750"
-set "blessedgb=250"
-set "specialmapsb=250"
-set "storymapsb=500"
-set "arenaduelsb=500"
-set "trainingtb=750"
-set "eventsb=750"
+for /f "tokens=*" %%i in ('"echo 188 / 740 | bc -l"') do set "left_battle_column_fui=%%i"
+for /f "tokens=*" %%i in ('"echo 542 / 740 | bc -l"') do set "right_battle_column_fui=%%i"
+set "blessedgb_fui=0.25"
+set "specialmapsb_fui=0.25"
+set "storymapsb_fui=0.5"
+set "arenaduelsb_fui=0.5"
+set "trainingtb_fui=0.75"
+set "eventsb_fui=0.75"
 
 :: Special maps button heights as of v2.5.0
 set "specialmapsb_offset=333"
 set "specialmapsb_height=161"
-
-:: adb screen rotation values
-set "portrait_orientation=0"
-set "landscape_orientation=1"
-set "portrait_reversed_orientation=2"
-set "landscape_reversed_orientation=3"
 
 :: adb accelerometer values
 set "stay_in_current_rotation=0"
