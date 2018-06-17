@@ -71,7 +71,7 @@ for /f "tokens=*" %%i in ('"echo 807.5 / 1280 | bc -l"') do set "daily_login_bon
 :: Bottom row of buttons on the main FEH user interface (fui).        ::
 :: These are fractional values based on the FUI display ratio (37:64) ::
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-for /f "tokens=*" %%i in ('"echo 1230 / 1280 | bc -l"') do set "bottom_row_fui=%%i"
+for /f "tokens=*" %%i in ('"echo 1230 / 1280 | bc -l"') do set "bottom_row_pui=%%i"
 
 :: Home screen coordinates
 for /f "tokens=*" %%i in ('"echo 66.00 / 740 | bc -l"') do set "home_fui=%%i"
@@ -84,27 +84,32 @@ for /f "tokens=*" %%i in ('"echo 187.5 / 740 | bc -l"') do set "battle_fui=%%i"
 
 	:: Blessed Gardens
 	set "blessedg_x_fui=!left_battle_column_fui!"
-	set "blessedg_y_fui=0.25"
+	set "blessedg_y_pui=0.25"
 
 	:: Special Maps
 	set "specialmaps_x_fui=!right_battle_column_fui!"
-	set "specialmaps_y_fui=0.25"
+	set "specialmaps_y_pui=0.25"
+		set "specialmaps_screen_x_pui=0.5"
+		for /f "tokens=*" %%i in ('"echo 343 / 1280 | bc -l"') do set "specialmaps_top_pui=%%i"
+		for /f "tokens=*" %%i in ('"echo 1139 / 1280 | bc -l"') do set "specialmaps_bottom_pui=%%i"
+		for /f "tokens=*" %%i in ('"echo 164 / 1280 | bc -l"') do set "specialmaps_height_pui=%%i"
+		for /f "tokens=*" %%i in ('"echo 43 / 1280 | bc -l"') do set "specialmaps_margin_pui=%%i"
 
 	:: Story Maps
 	set "storymaps_x_fui=!left_battle_column_fui!"
-	set "storymaps_y_fui=0.5"
+	set "storymaps_y_pui=0.5"
 
 	:: Arena Duels
 	set "arenaduels_x_fui=!right_battle_column_fui!"
-	set "arenaduels_y_fui=0.5"
+	set "arenaduels_y_pui=0.5"
 
 	:: Training Tower
 	set "trainingt_x_fui=!left_battle_column_fui!"
-	set "trainingt_y_fui=0.75"
+	set "trainingt_y_pui=0.75"
 
 	:: Events
 	set "events_x_fui=!right_battle_column_fui!"
-	set "events_y_fui=0.75"
+	set "events_y_pui=0.75"
 
 :: Allies screen coordinates
 for /f "tokens=*" %%i in ('"echo 308.5 / 740 | bc -l"') do set "allies_fui=%%i"
