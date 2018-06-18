@@ -557,7 +557,7 @@ set "nfc_found="
 
 
 	:: Give the app time to open and load before continuing. This time is overkill on any decent phone/internet.
-	timeout /t 15 /nobreak
+	timeout /t 30 /nobreak
 
 	:: Ensure that FEH is the focused app right now, and if not, it's not installed.
 	adb shell "dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp'" | find "com.nintendo.zaba" > nul
