@@ -608,16 +608,16 @@ set "nfc_found="
 	set "y=!foutput!"
 	for /l %%i in (1,1,5) do adb shell input tap !x! !y! > nul
 
-	:: Calculate the exit button for the notifications and tap it 3 times
+	:: Calculate the exit button for the notifications and tap it 5 times
 	cls
 	echo.
 	echo  Notifications from Nintendo...
 	call :getphonepixelvalue %notifications_x_pui%
 	set "x=!foutput!"
 	for /f "tokens=*" %%i in ('"echo v=(!height! - (1.5 * !navheight!));scale=0;v/1 | bc -l"') do set "y=%%i"
-	for /l %%i in (1,1,3) do adb shell input tap !x! !y! > nul
+	for /l %%i in (1,1,5) do adb shell input tap !x! !y! > nul
 
-	:: Calculate the "Celebration Bonus" close button and tap it 3 times
+	:: Calculate the "Celebration Bonus" close button and tap it 5 times
 	cls
 	echo.
 	echo  "Celebration Bonus"...
@@ -625,9 +625,9 @@ set "nfc_found="
 	set "x=!foutput!"
 	call :getpixelvalue %celebration_bonus_y_fui% !height!
 	set "y=!foutput!"
-	for /l %%i in (1,1,3) do adb shell input tap !x! !y! > nul
+	for /l %%i in (1,1,5) do adb shell input tap !x! !y! > nul
 
-	:: Finally, calculate the daily log-in close button and tap it 3 times
+	:: Finally, calculate the daily log-in close button and tap it 5 times
 	cls
 	echo.
 	echo  Daily Log-In Bonus...
@@ -635,7 +635,7 @@ set "nfc_found="
 	set "x=!foutput!"
 	call :getpixelvalue %daily_login_bonus_y_pui% !height!
 	set "y=!foutput!"
-	for /l %%i in (1,1,3) do adb shell input tap !x! !y! > nul
+	for /l %%i in (1,1,5) do adb shell input tap !x! !y! > nul
 
 	goto init
 
