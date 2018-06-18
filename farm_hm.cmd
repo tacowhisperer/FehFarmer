@@ -530,18 +530,24 @@ set "nfc_found="
 :ensurefehworks
 	:: Check if the app is already running in the foreground to avoid the initialization subroutine.
 	adb shell "dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp'" | find "com.nintendo.zaba" > nul
-	if [%errorlevel%]==[0] (goto init)
+	if [%errorlevel%]==[0] (
+		goto init
+	)
 
 	:: Determine whether or not the app was simply running in the background.
 	set "feh_in_bg="
 	adb shell ps | find "com.nintendo.zaba" > nul
-	if [%errorlevel%]==[0] (set "feh_in_bg=true")
+	if [%errorlevel%]==[0] (
+		set "feh_in_bg=true"
+	)
 
 	:: Attempt to start the app and make it focused if not already.
 	adb shell monkey -p com.nintendo.zaba 1 > nul
 
 	:: There is nothing else to do if the app was simply switched from the bg to the fg (assuming FEH is not on title screen)
-	if defined feh_in_bg (goto init)
+	if defined feh_in_bg (
+		goto init
+	)
 
 	color 07
 	mode 50, 4
@@ -553,78 +559,20 @@ set "nfc_found="
 	:: Give the app time to open and load before continuing. This time is overkill on any decent phone/internet.
 	timeout /t 15 /nobreak
 
-	cls
-	echo.
-	echo BEFORE
-	pause
-
 	:: Ensure that FEH is the focused app right now, and if not, it's not installed.
 	adb shell "dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp'" | find "com.nintendo.zaba" > nul
 
-	cls
-	echo.
-	echo AFTER %errorlevel%
-	pause
-
-	if %errorlevel% EQU 0 (
-		cls
-		echo.
-		echo  Loading FEH...
-		pause > nul
-
-		:: Calculate the center of the screen and tap it
-		call :getphonepixelvalue %welcome_x_fui%
-		set "x=!foutput!"
-		call :getpixelvalue %welcome_y_fui% !height!
-		set "y=!foutput!"
-
-		adb shell input tap !x! !y! > nul
-
-		timeout /t 18 /nobreak
-
-		:: Calculate the currently active banners close button and tap it 5 times
-		cls
-		echo.
-		echo  Currently active banners...
-		call :getphonepixelvalue %banners_x_fui%
-		set "x=!foutput!"
-		call :getpixelvalue %banners_y_pui% !height!
-		set "y=!foutput!"
-		for /l %%i in (1,1,5) do adb shell input tap !x! !y! > nul
-
-		:: Calculate the exit button for the notifications and tap it 3 times
-		cls
-		echo.
-		echo  Notifications from Nintendo...
-		call :getphonepixelvalue %notifications_x_pui%
-		set "x=!foutput!"
-		for /f "tokens=*" %%i in ('"echo v=(!height! - (1.5 * !navheight!));scale=0;v/1 | bc -l"') do set "y=%%i"
-		for /l %%i in (1,1,3) do adb shell input tap !x! !y! > nul
-
-		:: Calculate the "Celebration Bonus" close button and tap it 3 times
-		cls
-		echo.
-		echo  "Celebration Bonus"...
-		call :getphonepixelvalue %celebration_bonus_x_fui%
-		set "x=!foutput!"
-		call :getpixelvalue %celebration_bonus_y_fui% !height!
-		set "y=!foutput!"
-		for /l %%i in (1,1,3) do adb shell input tap !x! !y! > nul
-
-		:: Finally, calculate the daily log-in close button and tap it 3 times
-
-		goto init
-	) else (
+	if not [%errorlevel%]==[0] (
 		color 0C
 		mode 44, 11
 		cls
 		echo.
-		echo  ERROR: FE HEROES IS NOT INSTALLED!
+		echo  ERROR: FE HEROES IS NOT INSTALLED^^!
 		echo.
 		echo  Make sure that it is properly installed,
 		echo  the tutorial is finished, all rewards have
-		echo  been claimed, and on the homepage. Then,
-		echo  feel free to try again.
+		echo  been claimed, and you are on the home
+		echo  screen. Then, feel tree to try again.
 		echo.
 		echo  If you keep seeing this message, there is
 		echo  something wrong with adb and it must be
@@ -635,6 +583,53 @@ set "nfc_found="
 
 		exit
 	)
+
+	cls
+	echo.
+	echo  Loading FEH...
+
+	:: Calculate the center of the screen and tap it
+	call :getphonepixelvalue %welcome_x_fui%
+	set "x=!foutput!"
+	call :getpixelvalue %welcome_y_fui% !height!
+	set "y=!foutput!"
+
+	adb shell input tap !x! !y! > nul
+
+	timeout /t 18 /nobreak
+
+	:: Calculate the currently active banners close button and tap it 5 times
+	cls
+	echo.
+	echo  Currently active banners...
+	call :getphonepixelvalue %banners_x_fui%
+	set "x=!foutput!"
+	call :getpixelvalue %banners_y_pui% !height!
+	set "y=!foutput!"
+	for /l %%i in (1,1,5) do adb shell input tap !x! !y! > nul
+
+	:: Calculate the exit button for the notifications and tap it 3 times
+	cls
+	echo.
+	echo  Notifications from Nintendo...
+	call :getphonepixelvalue %notifications_x_pui%
+	set "x=!foutput!"
+	for /f "tokens=*" %%i in ('"echo v=(!height! - (1.5 * !navheight!));scale=0;v/1 | bc -l"') do set "y=%%i"
+	for /l %%i in (1,1,3) do adb shell input tap !x! !y! > nul
+
+	:: Calculate the "Celebration Bonus" close button and tap it 3 times
+	cls
+	echo.
+	echo  "Celebration Bonus"...
+	call :getphonepixelvalue %celebration_bonus_x_fui%
+	set "x=!foutput!"
+	call :getpixelvalue %celebration_bonus_y_fui% !height!
+	set "y=!foutput!"
+	for /l %%i in (1,1,3) do adb shell input tap !x! !y! > nul
+
+	:: Finally, calculate the daily log-in close button and tap it 3 times
+
+	goto init
 
 	goto:eof
 
