@@ -65,7 +65,7 @@ for /f "tokens=*" %%i in ('"echo 1002 / 1280 | bc -l"') do set "celebration_bonu
 
 :: Daily log-in bonus popup (usually dueling swords or feathers)
 set "daily_login_bonus_x_fui=0.5"
-for /f "tokens=*" %%i in ('"echo 807.5 / 1280 | bc -l"') do set "daily_login_bonus_y_fui=%%i"
+for /f "tokens=*" %%i in ('"echo 807.5 / 1280 | bc -l"') do set "daily_login_bonus_y_pui=%%i"
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Bottom row of buttons on the main FEH user interface (fui).        ::
@@ -596,7 +596,7 @@ set "nfc_found="
 
 	adb shell input tap !x! !y! > nul
 
-	timeout /t 18 /nobreak
+	timeout /t 30 /nobreak
 
 	:: Calculate the currently active banners close button and tap it 5 times
 	cls
@@ -628,9 +628,32 @@ set "nfc_found="
 	for /l %%i in (1,1,3) do adb shell input tap !x! !y! > nul
 
 	:: Finally, calculate the daily log-in close button and tap it 3 times
+	cls
+	echo.
+	echo  Daily Log-In Bonus...
+	call :getphonepixelvalue %daily_login_bonus_x_fui%
+	set "x=!foutput!"
+	call :getpixelvalue %daily_login_bonus_y_pui% !height!
+	set "y=!foutput!"
+	for /l %%i in (1,1,3) do adb shell input tap !x! !y! > nul
 
 	goto init
 
+	:: Control-flow should never reach this statement
+	mode 43, 11
+	color 0C
+	cls
+	echo.
+	echo  FATAL ERROR: CONTROL FLOW MIS-EXECUTION
+	echo.
+	echo  This message must never be shown on the
+	echo  screen. If you are seeing this message,
+	echo  something went horribly, HORRIBLY wrong
+	echo  with the program.
+	echo.
+	echo  Press any key to spray holy water on your
+	echo  PC, call an exorcist, and gtfo...
+	pause > nul
 	goto:eof
 
 :: Helper subroutine for selecting a bottom row button on the FEH gui.
