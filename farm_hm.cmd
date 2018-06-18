@@ -24,17 +24,6 @@
 title FEH Farmer
 setlocal EnableDelayedExpansion
 
-:: The team to farm with
-set "use_team_number=1"
-
-:: Number of special maps available and map to farm on (use 1 for the 1st one, 2 for the second, etc.)
-set "num_special_maps=7"
-set "farm_on_map=1"
-
-::::::::::::::::::::::::::::::::::::::::::::
-:: DO NOT MODIFY ANYTHING BELOW THIS LINE ::
-::::::::::::::::::::::::::::::::::::::::::::
-
 :: Ensures that bc is in the right directory. The program may not continue if it cannot do math, duh...
 bc -v > nul
 
@@ -509,7 +498,7 @@ if "%errorlevel%" == "0" (
 		echo.
 		echo  When ready, press any key to try again...
 		pause > nul
-		
+
 		cls
 		echo.
 		echo  Retrying...
