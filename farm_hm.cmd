@@ -1,3 +1,25 @@
+:: GLWT(Good Luck With That) Public License
+:: Copyright (c) Everyone, except Author
+:: 
+:: The author has absolutely no clue what the code in this project does.
+:: It might just work or not, there is no third option.
+:: 
+:: Everyone is permitted to copy, distribute, modify, merge, sell, publish,
+:: sublicense or whatever they want with this software but at their OWN RISK.
+:: 
+:: 
+::                 GOOD LUCK WITH THAT PUBLIC LICENSE
+::    TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION, AND MODIFICATION
+:: 
+:: 0. You just DO WHATEVER YOU WANT TO as long as you NEVER LEAVE A
+:: TRACE TO TRACK THE AUTHOR of the original product to blame for or hold
+:: responsible.
+:: 
+:: IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+:: WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+:: CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+:: 
+:: Good luck and Godspeed.
 @echo off
 title FEH Farmer
 setlocal EnableDelayedExpansion
@@ -467,8 +489,6 @@ if "%errorlevel%" == "0" (
 	goto:eof
 
 :: Ensure that the device is unlocked.
-set "unlock_tries=0"
-set "nfc_found="
 :checkunlocked
 	::Source
 	::https://stackoverflow.com/questions/35275828/is-there-a-way-to-check-if-android-device-screen-is-locked-via-adb/35276479
@@ -478,52 +498,26 @@ set "nfc_found="
 	if [%errorlevel%]==[0] (
 		goto ensurefehworks
 	) else (
-		if !unlock_tries! GEQ 5 (
-			color 0E
-			mode 37, 14
-			cls
-			echo.
-			echo  WARNING: DEVICE MAY NOT HAVE NFC
-			echo.
-			echo  Due to a limitation with adb, a
-			echo  device without nfc cannot guarantee
-			echo  that it is on while the script is
-			echo  executing.
-			echo.
-			echo  The script will continue to run
-			echo  under the assumption that you will
-			echo  keep an eye on its functionality.
-			echo.
-			echo  Press any key to continue...
-			pause > nul
+		color 0C
+		mode 43, 8
+		cls
+		echo.
+		echo  ERROR: DEVICE IS LOCKED!
+		echo.
+		echo  Make sure that the device is unlocked so
+		echo  that the script may do its thing.
+		echo.
+		echo  When ready, press any key to try again...
+		pause > nul
+		
+		cls
+		echo.
+		echo  Retrying...
+		timeout /t 1 /nobreak > nul
 
-			goto ensurefehworks
-		) else (
-			color 0C
-			mode 43, 8
-			cls
-			echo.
-			echo  ERROR: DEVICE IS LOCKED!
-			echo.
-			echo  Make sure that the device is unlocked so
-			echo  that the script may do its thing.
-			echo.
-			echo  When ready, press any key to try again...
-			pause > nul
-			cls
-			echo.
-			echo  Retrying...
-			set /a "unlock_tries+=1"
-			timeout /t 1 /nobreak > nul
-
-			goto checkunlocked
-		)
+		goto checkunlocked
 	)
 
-	goto:eof
-
-:: Converts the percentage values of all _fui variables to be _pui variables
-:convertfuitopui
 	goto:eof
 
 :: Ensure that Fire Emblem Heroes is working correctly.
@@ -672,19 +666,34 @@ set "nfc_found="
 	timeout /t 1 /nobreak > nul
 	goto:eof
 
-:: Specialty subroutine for the :battlescreen subroutine to enter the special maps
-:specialmaps
+:: Specialty subroutine for the :bottomrowselect %battle_fui% subroutine to enter the special maps
+:specialmapsscreen
 	:: Calculate the right column pixel value
-	call :getphonepixelvalue %right_battle_column%
+	call :getphonepixelvalue %right_battle_column_fui%
 	set "x=!foutput!"
 
 	:: Calculate the pixel value for the special maps battle option
-	call :getpixelvalue %specialmapsb% !height!
+	call :getpixelvalue %specialmaps_y_pui% !height!
 	set "y=!foutput!"
 
 	:: Go to the special maps screen
 	adb shell input tap !x! !y! > nul
 	timeout /t 1 /nobreak > nul
+
+	goto:eof
+
+:: Specialty subroutine for selecting a rectangular box like the ones found in the special maps screen.
+:rectangularlistselect
+	set "element=%~1"
+	call :isnumerical !element!
+	if "!foutput!"=="false" (set "element=1")
+
+	set "num_elements=%~2"
+	call :isnumerical !num_elements!
+	if "!foutput!"=="false" (set "num_elements=1")
+
+	:: specialmaps_top_pui, specialmaps_bottom_pui, specialmaps_margin_pui, specialmaps_height_pui
+
 	goto:eof
 
 :: Converts decimal values to pixel values over a fixed-size dimension that can be sent over adb.
@@ -753,6 +762,7 @@ set "nfc_found="
 
 	:: Initialization of the farming.
 	call :bottomrowselect %battle_fui%
+	call :specialmapsscreen
 
 	goto:eof
 
