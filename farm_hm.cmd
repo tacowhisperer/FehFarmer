@@ -140,9 +140,6 @@ mode 50, 3
 echo.
 echo   INITIALIZING...
 
-:: Prevent a pop-up and unwanted text from showing up to the terminal
-start cmd /c "adb devices" /b
-
 :: Initializes the daemon if it's not running already
 adb devices > nul
 
@@ -247,6 +244,9 @@ if "%errorlevel%" == "0" (
 			rem Also calculate the FEH screen size
 			for /f "tokens=*" %%i in ('"echo v=(37 / 64 * !height!);scale=0;v/1 | bc -l"') do set "feh_width=%%i"
 			set "feh_height=!height!"
+
+			rem Finally, calculate the delta value for adjusting percentages from feh (fui) to phone (pui)
+			for /f "tokens=*" %%i in ('"echo (!feh_width! - !width!) / 2 | bc -l"') do set "delta=%%i"
 
 			goto checkunlocked
 		)
@@ -452,6 +452,9 @@ if "%errorlevel%" == "0" (
 		for /f "tokens=*" %%i in ('"echo v=(37 / 64 * !height!);scale=0;v/1 | bc -l"') do set "feh_width=%%i"
 		set "feh_height=!height!"
 
+		rem Finally, calculate the delta value for adjusting percentages from feh (fui) to phone (pui)
+		for /f "tokens=*" %%i in ('"echo (!feh_width! - !width!) / 2 | bc -l"') do set "delta=%%i"
+
 		timeout /t 3 /nobreak > nul
 		cls
 		echo.
@@ -527,20 +530,18 @@ set "nfc_found="
 :ensurefehworks
 	:: Check if the app is already running in the foreground to avoid the initialization subroutine.
 	adb shell "dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp'" | find "com.nintendo.zaba" > nul
-	if [%errorlevel%]==[0] (
-		goto init
-	)
+	if [%errorlevel%]==[0] (goto init)
 
 	:: Determine whether or not the app was simply running in the background.
 	set "feh_in_bg="
 	adb shell ps | find "com.nintendo.zaba" > nul
-	if [%errorlevel%]==[0] set "feh_in_bg=true"
+	if [%errorlevel%]==[0] (set "feh_in_bg=true")
 
 	:: Attempt to start the app and make it focused if not already.
 	adb shell monkey -p com.nintendo.zaba 1 > nul
 
 	:: There is nothing else to do if the app was simply switched from the bg to the fg (assuming FEH is not on title screen)
-	if defined feh_in_bg goto init
+	if defined feh_in_bg (goto init)
 
 	color 07
 	mode 50, 4
@@ -552,15 +553,27 @@ set "nfc_found="
 	:: Give the app time to open and load before continuing. This time is overkill on any decent phone/internet.
 	timeout /t 15 /nobreak
 
+	cls
+	echo.
+	echo BEFORE
+	pause
+
 	:: Ensure that FEH is the focused app right now, and if not, it's not installed.
 	adb shell "dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp'" | find "com.nintendo.zaba" > nul
-	if [%errorlevel%]==[0] (
+
+	cls
+	echo.
+	echo AFTER %errorlevel%
+	pause
+
+	if %errorlevel% EQU 0 (
 		cls
 		echo.
 		echo  Loading FEH...
+		pause > nul
 
 		:: Calculate the center of the screen and tap it
-		call :getpixelvalue %welcome_x_fui% !width!
+		call :getphonepixelvalue %welcome_x_fui%
 		set "x=!foutput!"
 		call :getpixelvalue %welcome_y_fui% !height!
 		set "y=!foutput!"
@@ -573,7 +586,7 @@ set "nfc_found="
 		cls
 		echo.
 		echo  Currently active banners...
-		call :getpixelvalue %banners_x_fui% !width!
+		call :getphonepixelvalue %banners_x_fui%
 		set "x=!foutput!"
 		call :getpixelvalue %banners_y_pui% !height!
 		set "y=!foutput!"
@@ -583,7 +596,7 @@ set "nfc_found="
 		cls
 		echo.
 		echo  Notifications from Nintendo...
-		call :getpixelvalue %notifications_x_pui% !width!
+		call :getphonepixelvalue %notifications_x_pui%
 		set "x=!foutput!"
 		for /f "tokens=*" %%i in ('"echo v=(!height! - (1.5 * !navheight!));scale=0;v/1 | bc -l"') do set "y=%%i"
 		for /l %%i in (1,1,3) do adb shell input tap !x! !y! > nul
@@ -592,7 +605,7 @@ set "nfc_found="
 		cls
 		echo.
 		echo  "Celebration Bonus"...
-		call :getpixelvalue %celebration_bonus_x_fui% !width!
+		call :getphonepixelvalue %celebration_bonus_x_fui%
 		set "x=!foutput!"
 		call :getpixelvalue %celebration_bonus_y_fui% !height!
 		set "y=!foutput!"
@@ -629,10 +642,8 @@ set "nfc_found="
 :bottomrowselect
 	:: Get the selected button's x-coordinate
 	set "screenb=%~1"
-	if [%~1]==[] (
-		set "screenb=%home_fui%"
-	)
-	call :getpixelvalue !screenb! !width!
+	if [%~1]==[] (set "screenb=%home_fui%")
+	call :getphonepixelvalue !screenb!
 	set "x=!foutput!"
 
 	call :getpixelvalue %bottom_row_pui% !height!
@@ -646,7 +657,7 @@ set "nfc_found="
 :: Specialty subroutine for the :battlescreen subroutine to enter the special maps
 :specialmaps
 	:: Calculate the right column pixel value
-	call :getpixelvalue %right_battle_column% !width!
+	call :getphonepixelvalue %right_battle_column%
 	set "x=!foutput!"
 
 	:: Calculate the pixel value for the special maps battle option
@@ -661,16 +672,23 @@ set "nfc_found="
 :: Converts decimal values to pixel values over a fixed-size dimension that can be sent over adb.
 :getpixelvalue
 	set "percentage=%~1"
-	if [%~1]==[] (
-		set "percentage=0"
-	)
+	if [%~1]==[] (set "percentage=0")
 
 	set "dim=%~2"
-	if [%~2]==[] (
-		set "dim=0"
-	)
+	if [%~2]==[] (set "dim=0")
 
 	for /f "tokens=*" %%i in ('"echo v=(!percentage! * !dim!);scale=0;v/1 | bc -l"') do set "foutput=%%i"
+
+	goto:eof
+
+:: Converts feh decimal values to phone decimal values over width, and then to pixel values for adb.
+:getphonepixelvalue
+	set "feh_percentage=%~1"
+	if [%~1]==[] (set "feh_percentage=0")
+
+	for /f "tokens=*" %%i in ('"echo ((!feh_percentage! * !feh_width!) - !delta!) / !width! | bc -l"') do set "perzentage=%%i"
+
+	call :getpixelvalue !perzentage! !width!
 
 	goto:eof
 
@@ -692,10 +710,10 @@ set "nfc_found="
 	set "a=%~2"
 
 	call :isnumerical !b!
-	if "!foutput!" == "false" set "b=0"
+	if "!foutput!" == "false" (set "b=0")
 
 	call :isnumerical !a!
-	if "!foutput!" == "false" set "a=1"
+	if "!foutput!" == "false" (set "a=1")
 
 	:: Set a random value between 0 and 1 inclusive to p
 	for /f "tokens=*" %%i in ('"echo %random% / 32797 | bc -l"') do set "p=%%i"
