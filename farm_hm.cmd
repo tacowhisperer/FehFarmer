@@ -534,9 +534,7 @@ set "nfc_found="
 	:: Determine whether or not the app was simply running in the background.
 	set "feh_in_bg="
 	adb shell ps | find "com.nintendo.zaba" > nul
-	if [%errorlevel%]==[0] (
-		set "feh_in_bg=true"
-	)
+	if [%errorlevel%]==[0] set "feh_in_bg=true"
 
 	:: Attempt to start the app and make it focused if not already.
 	adb shell monkey -p com.nintendo.zaba 1 > nul
