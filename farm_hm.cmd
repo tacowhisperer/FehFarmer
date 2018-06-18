@@ -50,17 +50,17 @@ set "foutput=null"
 
 :: Fire Emblem...*inhales*... HEROES!!!
 set "welcome_x_fui=0.5"
-set "welcome_y_fui=0.75"
+set "welcome_y_fui=0.78"
 
 :: Banners available pop-up coordinates to close the screen
-set "banners_x_fui=0.5"
-for /f "tokens=*" %%i in ('"echo 1073 / 1280 | bc -l"') do set "banners_y_fui=%%i"
+for /f "tokens=*" %%i in ('"echo 590 / 740 | bc -l"') do set "banners_x_fui=%%i"
+for /f "tokens=*" %%i in ('"echo 1073 / 1280 | bc -l"') do set "banners_y_pui=%%i"
 
 :: Notifications from Nintendo using the phone user interface (pui)
 for /f "tokens=*" %%i in ('"echo 985 / 1080 | bc -l"') do set "notifications_x_pui=%%i"
 
 :: Celebration bonuses (big golden screens with the bread of every day)
-set "celebration_bonus_x_fui=0.5"
+for /f "tokens=*" %%i in ('"echo 500 / 740 | bc -l"') do set "celebration_bonus_x_fui=%%i"
 for /f "tokens=*" %%i in ('"echo 1002 / 1280 | bc -l"') do set "celebration_bonus_y_fui=%%i"
 
 :: Daily log-in bonus popup (usually dueling swords or feathers)
@@ -413,9 +413,7 @@ if "%errorlevel%" == "0" (
 			for /f "tokens=2 delims=-" %%i in ("!phone_navbar_range!") do (
 				set "phone_navbar_vals=%%i"
 
-				for /f "tokens=1 delims=x" %%i in ("!phone_navbar_vals!") do (
-					set "navheight=%%i"
-				)
+				for /f "tokens=1 delims=x" %%i in ("!phone_navbar_vals!") do set "navheight=%%i"
 
 				rem Ensure that the navbar height value is numerical
 				call :isnumerical !navheight!
@@ -521,6 +519,10 @@ set "nfc_found="
 
 	goto:eof
 
+:: Converts the percentage values of all _fui variables to be _pui variables
+:convertfuitopui
+	goto:eof
+
 :: Ensure that Fire Emblem Heroes is working correctly.
 :ensurefehworks
 	:: Check if the app is already running in the foreground to avoid the initialization subroutine.
@@ -557,7 +559,7 @@ set "nfc_found="
 	if [%errorlevel%]==[0] (
 		cls
 		echo.
-		echo  Entering game...
+		echo  Loading FEH...
 
 		:: Calculate the center of the screen and tap it
 		call :getpixelvalue %welcome_x_fui% !width!
@@ -569,20 +571,36 @@ set "nfc_found="
 
 		timeout /t 18 /nobreak
 
-		:: Calculate the exit button for the notifications and tap it a few times
-		:: !navheight! !width! !height! !feh_width! !feh_height! %notifications_x_pui%
+		:: Calculate the currently active banners close button and tap it 5 times
+		cls
+		echo.
+		echo  Currently active banners...
+		call :getpixelvalue %banners_x_fui% !width!
+		set "x=!foutput!"
+		call :getpixelvalue %banners_y_pui% !height!
+		set "y=!foutput!"
+		for /l %%i in (1,1,5) do adb shell input tap !x! !y! > nul
 
+		:: Calculate the exit button for the notifications and tap it 3 times
+		cls
+		echo.
+		echo  Notifications from Nintendo...
 		call :getpixelvalue %notifications_x_pui% !width!
 		set "x=!foutput!"
 		for /f "tokens=*" %%i in ('"echo v=(!height! - (1.5 * !navheight!));scale=0;v/1 | bc -l"') do set "y=%%i"
+		for /l %%i in (1,1,3) do adb shell input tap !x! !y! > nul
 
+		:: Calculate the "Celebration Bonus" close button and tap it 3 times
 		cls
 		echo.
-		echo  Tapping away notifications...
+		echo  "Celebration Bonus"...
+		call :getpixelvalue %celebration_bonus_x_fui% !width!
+		set "x=!foutput!"
+		call :getpixelvalue %celebration_bonus_y_fui% !height!
+		set "y=!foutput!"
+		for /l %%i in (1,1,3) do adb shell input tap !x! !y! > nul
 
-		for /l %%i in (1,1,5) DO (
-			adb shell input tap !x! !y! > nul
-		)
+		:: Finally, calculate the daily log-in close button and tap it 3 times
 
 		goto init
 	) else (
