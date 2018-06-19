@@ -673,6 +673,12 @@ if "%errorlevel%" == "0" (
 
 :: Specialty subroutine for selecting a rectangular box like the ones found in the special maps screen.
 :rectangularlistselect
+	
+
+	goto:eof
+
+:: Helper subroutine for performing all scrolling in the FEH gui
+:scrollhelper
 	set "element=%~1"
 	call :isnumerical !element!
 	if "!foutput!"=="false" (set "element=1")
@@ -682,6 +688,9 @@ if "%errorlevel%" == "0" (
 	if "!foutput!"=="false" (set "num_elements=1")
 
 	:: specialmaps_top_pui, specialmaps_bottom_pui, specialmaps_margin_pui, specialmaps_height_pui
+
+	:: Scroll up to ensure that the first element is just below specialmaps_top_pui
+	:: https://stackoverflow.com/questions/39190083/how-can-i-scroll-an-application-using-adb
 
 	goto:eof
 
