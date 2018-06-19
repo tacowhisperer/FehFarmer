@@ -540,7 +540,7 @@ if "%errorlevel%" == "0" (
 
 
 	:: Give the app time to open and load before continuing. This time is overkill on any decent phone/internet.
-	timeout /t 30 /nobreak
+	timeout /t 25 /nobreak
 
 	:: Ensure that FEH is the focused app right now, and if not, it's not installed.
 	adb shell "dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp'" | find "com.nintendo.zaba" > nul
@@ -579,7 +579,7 @@ if "%errorlevel%" == "0" (
 
 	adb shell input tap !x! !y! > nul
 
-	timeout /t 30 /nobreak
+	timeout /t 25 /nobreak
 
 	:: Calculate the currently active banners close button and tap it 5 times
 	cls
@@ -589,7 +589,10 @@ if "%errorlevel%" == "0" (
 	set "x=!foutput!"
 	call :getpixelvalue %banners_y_pui% !height!
 	set "y=!foutput!"
-	for /l %%i in (1,1,5) do adb shell input tap !x! !y! > nul
+	for /l %%i in (1,1,5) do (
+		adb shell input tap !x! !y! > nul
+		timeout /t 1 /nobreak > nul
+	)
 
 	:: Calculate the exit button for the notifications and tap it 5 times
 	cls
@@ -598,7 +601,10 @@ if "%errorlevel%" == "0" (
 	call :getphonepixelvalue %notifications_x_pui%
 	set "x=!foutput!"
 	for /f "tokens=*" %%i in ('"echo v=(!height! - (1.5 * !navheight!));scale=0;v/1 | bc -l"') do set "y=%%i"
-	for /l %%i in (1,1,5) do adb shell input tap !x! !y! > nul
+	for /l %%i in (1,1,5) do (
+		adb shell input tap !x! !y! > nul
+		timeout /t 1 /nobreak > nul
+	)
 
 	:: Calculate the "Celebration Bonus" close button and tap it 5 times
 	cls
@@ -608,7 +614,10 @@ if "%errorlevel%" == "0" (
 	set "x=!foutput!"
 	call :getpixelvalue %celebration_bonus_y_fui% !height!
 	set "y=!foutput!"
-	for /l %%i in (1,1,5) do adb shell input tap !x! !y! > nul
+	for /l %%i in (1,1,5) do (
+		adb shell input tap !x! !y! > nul
+		timeout /t 1 /nobreak > nul
+	)
 
 	:: Finally, calculate the daily log-in close button and tap it 5 times
 	cls
@@ -618,7 +627,10 @@ if "%errorlevel%" == "0" (
 	set "x=!foutput!"
 	call :getpixelvalue %daily_login_bonus_y_pui% !height!
 	set "y=!foutput!"
-	for /l %%i in (1,1,5) do adb shell input tap !x! !y! > nul
+	for /l %%i in (1,1,5) do (
+		adb shell input tap !x! !y! > nul
+		timeout /t 1 /nobreak > nul
+	)
 
 	goto init
 
