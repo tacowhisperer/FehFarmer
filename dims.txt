@@ -13,3 +13,5 @@ Fire Emblem Heroes First-time Opening Sequence:
 	3.) Notifications from Nintendo popup
 	4.) "Celebration Bonus" gold screen(s)
 	5.) Daily Log-In Bonus(es)?
+
+mu = 1034.8750150947953145755343557541
