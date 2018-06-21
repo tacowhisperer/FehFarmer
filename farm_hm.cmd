@@ -24,21 +24,42 @@
 title FEH Farmer
 setlocal EnableDelayedExpansion
 
+:: Set the color sequence variables if they are available
+dir | find "cmdcolor"
+if "%errorlevel%" == "0" (
+	set "COLOR_RED=\033[91m"
+	set "COLOR_YELLOW=\033[93m"
+	set "COLOR_END=\033[0m | cmdcolor.exe"
+
+	goto checkbc
+)
+
+explorer "https://github.com/jeremejevs/cmdcolor"
+
+color 0E
+cls
+echo.
+echo  Consider adding cmdcolor.exe to avoid obnoxious colored text on the screen.
+timeout /t 5 /nobreak
+
+cls
+color 07
+
 :: Ensures that bc is in the right directory. The program may not continue if it cannot do math, duh...
+:checkbc
 bc -v > nul
 
 if not "%errorlevel%" == "0" (
-	color 0C
-	mode 28, 9
+	mode 41, 9
 	cls
 	echo.
-	echo  ERROR: BC IS NOT FOUND!
+	echo  %COLOR_RED%ERROR: BC IS NOT FOUND!%COLOR_END%
 	echo.
-	echo  Add bc.exe and dc.exe from
-	echo  the download page and try
-	echo  again.
+	echo  Download the zip file from the page
+	echo  shown and ensure that bc.exe is in the
+	echo  same directory as this script.
 
-	explorer "https://embedeo.org/ws/command_line/bc_dc_calculator_windows/bc-1.07.1-win32-embedeo-02.zip"
+	explorer "https://embedeo.org/ws/command_line/bc_dc_calculator_windows/"
 
 	echo.
 	echo  Press any key to exit...
@@ -143,9 +164,12 @@ for /f "tokens=*" %%i in ('"echo 551.0 / 740 | bc -l"') do set "shop_fui=%%i"
 :: Misc. screen coordinates
 for /f "tokens=*" %%i in ('"echo 672.5 / 740 | bc -l"') do set "misc_fui=%%i"
 
-:: First tap location
-rem set "app_init_x=916"
-rem set "app_init_y=885"
+:: Scroll timing
+set "t_ms=350"
+
+:: Stopping friction coefficient for scrolling
+for /f "tokens=*" %%i in ('"echo 207 / 350 | bc -l"') do set "tested_velocity=%%i"
+for /f "tokens=*" %%i in ('"echo (!tested_velocity! * !tested_velocity!) / (2 * 169) | bc -l"') do set "mu=%%i"
 
 mode 50, 3
 echo.
@@ -163,11 +187,10 @@ if "%errorlevel%" == "0" (
 
 	goto getscreensize
 ) else (
-	color 0C
 	mode 34, 9
 	cls
 	echo.
-	echo  ERROR: ADB IS NOT FOUND!
+	echo  %COLOR_RED%ERROR: ADB IS NOT FOUND!%COLOR_END%
 	echo.
 	echo  Add adb.exe and the appropriate
 	echo  accompanying .dll files from the
@@ -200,11 +223,10 @@ if "%errorlevel%" == "0" (
 			set /a "height_num=height+0"
 
 			if not [!width!]==[!width_num!] (
-				color 0C
 				mode 40, 26
 				cls
 				echo.
-				echo  ERROR: INVALID WIDTH DIMENSION!
+				echo  %COLOR_RED%ERROR: INVALID WIDTH DIMENSION!%COLOR_END%
 				echo.
 				echo  The adb connection to your phone
 				echo  found a bad value when attempting
@@ -230,11 +252,10 @@ if "%errorlevel%" == "0" (
 			)
 
 			if not [!height!]==[!height_num!] (
-				color 0C
 				mode 37, 16
 				cls
 				echo.
-				echo  ERROR: INVALID HEIGHT DIMENSION!
+				echo  %COLOR_RED%ERROR: INVALID HEIGHT DIMENSION!%COLOR_END%
 				echo.
 				echo  The adb connection to your phone
 				echo  found a bad value when attempting
@@ -271,11 +292,10 @@ if "%errorlevel%" == "0" (
 
 		rem Handle the case where the phone's dimensions are not correctly obtained
 		if not defined phone_dim_raw (
-			color 0C
 			mode 39, 15
 			cls
 			echo.
-			echo  ERROR: PARSE FAILURE^^!
+			echo  %COLOR_RED%ERROR: PARSE FAILURE^^!%COLOR_END%
 			echo.
 			echo  The output format for the command
 			echo.
@@ -294,11 +314,10 @@ if "%errorlevel%" == "0" (
 
 		rem Handle the case where the phone's navbar dimensions are not correctly obtained
 		if not defined phone_navbar_raw (
-			color 0C
 			mode 39, 15
 			cls
 			echo.
-			echo  ERROR: PARSE FAILURE^^!
+			echo  %COLOR_RED%ERROR: PARSE FAILURE^^!%COLOR_END%
 			echo.
 			echo  The output format for the command
 			echo.
@@ -321,11 +340,10 @@ if "%errorlevel%" == "0" (
 
 			rem Handle the case where the phone's dimension values are not = delimited
 			if not defined phone_dim (
-				color 0C
 				mode 33, 13
 				cls
 				echo.
-				echo  ERROR: FATAL PARSE FAILURE^^!
+				echo  %COLOR_RED%ERROR: FATAL PARSE FAILURE^^!%COLOR_END%
 				echo.
 				echo  The output format for the phone
 				echo  screen dimensions in pixels is
@@ -347,11 +365,10 @@ if "%errorlevel%" == "0" (
 
 				call :isnumerical !width!
 				if "!foutput!"=="false" (
-					color 0C
 					mode 40, 13
 					cls
 					echo.
-					echo  ERROR: NON-NUMERICAL VALUE OBTAINED
+					echo  %COLOR_RED%ERROR: NON-NUMERICAL VALUE OBTAINED%COLOR_END%
 					echo.
 					echo  The script encountered a non-numerical
 					echo  value while trying to get the device 
@@ -368,11 +385,10 @@ if "%errorlevel%" == "0" (
 
 				call :isnumerical !height!
 				if "!foutput!"=="false" (
-					color 0C
 					mode 40, 13
 					cls
 					echo.
-					echo  ERROR: NON-NUMERICAL VALUE OBTAINED
+					echo  %COLOR_RED%ERROR: NON-NUMERICAL VALUE OBTAINED%COLOR_END%
 					echo.
 					echo  The script encountered a non-numerical
 					echo  value while trying to get the device 
@@ -397,11 +413,10 @@ if "%errorlevel%" == "0" (
 			if not defined phone_navbar_range (
 				set "phone_navbar_range=0x0-0x0"
 
-				color 0E
 				mode 34, 18
 				cls
 				echo.
-				echo  WARNING: PARSE FAILURE
+				echo  %COLOR_YELLOW%WARNING: PARSE FAILURE%COLOR_END%
 				echo.
 				echo  The output format for the phone
 				echo  screen's navbar in pixels is
@@ -431,11 +446,10 @@ if "%errorlevel%" == "0" (
 				if "!foutput!"=="false" (
 					set "navheight=!height!"
 
-					color 0E
 					mode 34, 18
 					cls
 					echo.
-					echo  WARNING: BAD NAVHEIGHT VALUE
+					echo  %COLOR_YELLOW%WARNING: BAD NAVHEIGHT VALUE%COLOR_END%
 					echo.
 					echo  The output format for the phone
 					echo  screen's navbar in pixels was
@@ -466,7 +480,7 @@ if "%errorlevel%" == "0" (
 		rem Finally, calculate the delta value for adjusting percentages from feh (fui) to phone (pui)
 		for /f "tokens=*" %%i in ('"echo (!feh_width! - !width!) / 2 | bc -l"') do set "delta=%%i"
 
-		timeout /t 3 /nobreak > nul
+		timeout /t 1 /nobreak > nul
 		cls
 		echo.
 		echo  Detected device: !width!x!navheight!-!height!px
@@ -487,11 +501,10 @@ if "%errorlevel%" == "0" (
 	if [%errorlevel%]==[0] (
 		goto ensurefehworks
 	) else (
-		color 0C
 		mode 43, 8
 		cls
 		echo.
-		echo  ERROR: DEVICE IS LOCKED!
+		echo  %COLOR_RED%ERROR: DEVICE IS LOCKED!%COLOR_END%
 		echo.
 		echo  Make sure that the device is unlocked so
 		echo  that the script may do its thing.
@@ -532,7 +545,6 @@ if "%errorlevel%" == "0" (
 		goto init
 	)
 
-	color 07
 	mode 50, 4
 	cls
 	echo.
@@ -546,11 +558,10 @@ if "%errorlevel%" == "0" (
 	adb shell "dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp'" | find "com.nintendo.zaba" > nul
 
 	if not [%errorlevel%]==[0] (
-		color 0C
 		mode 44, 11
 		cls
 		echo.
-		echo  ERROR: FE HEROES IS NOT INSTALLED^^!
+		echo  %COLOR_RED%ERROR: FE HEROES IS NOT INSTALLED^^!%COLOR_END%
 		echo.
 		echo  Make sure that it is properly installed,
 		echo  the tutorial is finished, all rewards have
@@ -649,6 +660,7 @@ if "%errorlevel%" == "0" (
 	echo  Press any key to spray holy water on your
 	echo  PC, call an exorcist, and gtfo...
 	pause > nul
+
 	goto:eof
 
 :: Helper subroutine for selecting a bottom row button on the FEH gui.
@@ -685,8 +697,9 @@ if "%errorlevel%" == "0" (
 
 :: Specialty subroutine for selecting a rectangular box like the ones found in the special maps screen.
 :rectangularlistselect
+	:: specialmaps_top_pui, specialmaps_bottom_pui, specialmaps_margin_pui, specialmaps_height_pui
+	call :scrollhelper 1 1 !specialmaps_height_pui! !specialmaps_margin_pui! !specialmaps_top_pui! !specialmaps_bottom_pui!
 	
-
 	goto:eof
 
 :: Helper subroutine for performing all scrolling in the FEH gui
@@ -699,10 +712,52 @@ if "%errorlevel%" == "0" (
 	call :isnumerical !num_elements!
 	if "!foutput!"=="false" (set "num_elements=1")
 
-	:: specialmaps_top_pui, specialmaps_bottom_pui, specialmaps_margin_pui, specialmaps_height_pui
+	set "scrollbutton_height=%~3"
+	if [!scrollbutton_height!]==[] (set "scrollbutton_height=0")
+
+	set "scrollbutton_margin=%~4"
+	if [!scrollbutton_margin!]==[] (set "scrollbutton_margin=0")
+
+	set "scrollbutton_top=%~5"
+	if [!scrollbutton_top!]==[] (set "scrollbutton_top=0")
+
+	set "scrollbutton_bottom=%~6"
+	if [!scrollbutton_bottom!]==[] (set "scrollbutton_bottom=0")
+
+	:: Calculate the source and destination coordinates for swiping
+	call :getphonepixelvalue 0.5
+	set "x0=!foutput!"
+	set "x1=!foutput!"
+
+	call :getpixelvalue !scrollbutton_top! !height!
+	set "y_top=!foutput!"
+
+	call :getpixelvalue !scrollbutton_height! !height!
+	set "y_height=!foutput!"
+	for /f %%i in ('"echo v=(!y_height! / 2);scale=0;v/1 | bc -l"') do set "y_height_mid=%%i"
+
+	call :getpixelvalue !scrollbutton_margin! !height!
+	set "y_margin=!foutput!"
+
+	:: Calculate the target start and target end pixel values
+	for /f %%i in ('"echo !y_top! + !y_height_mid! | bc -l"') do set "y0=%%i"
+	for /f %%i in ('"echo !y0! + 1 * (!y_height! + !y_margin!) | bc -l"') do set "y1=%%i"
+
+	:: Subtract the necessary value from the target end so that the sliding distance aligns with the target distance.
+	for /f %%i in ('"echo v=(!mu! * %t_ms% * (sqrt(%t_ms% * %t_ms% + (2 * !y1! / !mu!)) - %t_ms%));scale=0;v/1 | bc -l"') do (
+		set "y_star=%%i"
+	)
+
+	cls
+	echo y1: !y1!
+	echo y_star: !y_star!
+	pause
+
+	set /a "y1=y1-y_star"
 
 	:: Scroll up to ensure that the first element is just below specialmaps_top_pui
 	:: https://stackoverflow.com/questions/39190083/how-can-i-scroll-an-application-using-adb
+	adb shell input swipe !x1! !y1! !x0! !y0! %t_ms%
 
 	goto:eof
 
@@ -764,7 +819,6 @@ if "%errorlevel%" == "0" (
 	goto:eof
 
 :init
-	color 07
 	mode 44, 3
 	cls
 	echo.
@@ -773,6 +827,7 @@ if "%errorlevel%" == "0" (
 	:: Initialization of the farming.
 	call :bottomrowselect %battle_fui%
 	call :specialmapsscreen
+	call :rectangularlistselect
 
 	goto:eof
 
