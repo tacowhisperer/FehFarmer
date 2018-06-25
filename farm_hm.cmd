@@ -815,6 +815,53 @@ if "%errorlevel%" == "0" (
 	mode 44, 3
 	cls
 	echo.
+	set /p num_special_maps=How many special maps are available? 
+	call :isnumerical %num_special_maps%
+	if "!foutput!"=="false" (
+		cls
+		echo.
+		echo  
+		goto init
+	)
+
+	cls
+	echo.
+	set /p selected_special_map=Which map do you want to use (1-%num_special_maps%)? 
+	call :isnumerical %selected_special_map%
+	if "!foutput!"=="false" (
+		cls
+		echo.
+		echo  Please enter a numerical value^^!
+		echo  Press any key to try again...
+		pause > nul
+
+		goto init
+	)
+
+	:: Handle any inputs less than 1
+	if %selected_special_map% LSS 1 (
+		cls
+		echo.
+		echo  The selected map "%selected_special_map%" is less than 1.
+		echo  Press any key to try again...
+		pause > nul
+
+		goto init
+	)
+
+	:: Handle any inputs greater than the number of special maps given
+	if %selected_special_map% GTR %num_special_maps% (
+		cls
+		echo.
+		echo  The selected map "%selected_special_map%" is greater than "%num_special_maps%"
+		echo  Press any key to try again...
+		pause > nul
+
+		goto init
+	)
+	
+	cls
+	echo.
 	echo  FARMING HERO MERIT USING GIVEN SETTINGS...
 
 	:: Initialization of the farming.
