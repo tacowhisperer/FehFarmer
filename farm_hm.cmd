@@ -25,7 +25,7 @@ title FEH Farmer
 setlocal EnableDelayedExpansion
 
 :: Set the color sequence variables if they are available
-dir | find "cmdcolor"
+dir | find "cmdcolor" > nul
 if "%errorlevel%" == "0" (
 	set "COLOR_RED=\033[91m"
 	set "COLOR_YELLOW=\033[93m"
@@ -167,9 +167,8 @@ for /f "tokens=*" %%i in ('"echo 672.5 / 740 | bc -l"') do set "misc_fui=%%i"
 :: Scroll timing
 set "t_ms=350"
 
-:: Stopping friction coefficient for scrolling
-for /f "tokens=*" %%i in ('"echo 207 / 350 | bc -l"') do set "tested_velocity=%%i"
-for /f "tokens=*" %%i in ('"echo (!tested_velocity! * !tested_velocity!) / (2 * 169) | bc -l"') do set "mu=%%i"
+:: Scaling factor for accounting for sliding when scrolling
+for /f "tokens=*" %%i in ('"echo 218 / 376 | bc -l"') do set "scroll_scale=%%i"
 
 mode 50, 3
 echo.
@@ -739,21 +738,15 @@ if "%errorlevel%" == "0" (
 	call :getpixelvalue !scrollbutton_margin! !height!
 	set "y_margin=!foutput!"
 
-	:: Calculate the target start and target end pixel values
+	:: Calculate the target start and additional travel end pixel values
 	for /f %%i in ('"echo !y_top! + !y_height_mid! | bc -l"') do set "y0=%%i"
-	for /f %%i in ('"echo !y0! + 1 * (!y_height! + !y_margin!) | bc -l"') do set "y1=%%i"
+	for /f %%i in ('"echo 1 * (!y_height! + !y_margin!) | bc -l"') do set "y_add=%%i"
 
-	:: Subtract the necessary value from the target end so that the sliding distance aligns with the target distance.
-	for /f %%i in ('"echo v=(!mu! * %t_ms% * (sqrt(%t_ms% * %t_ms% + (2 * !y1! / !mu!)) - %t_ms%));scale=0;v/1 | bc -l"') do (
-		set "y_star=%%i"
-	)
+	:: Scale the additional travel pixel coordinate to accouont for sliding
+	for /f %%i in ('"echo v=(!scroll_scale! * !y_add!);scale=0;v/1 | bc -l"') do set "y_star=%%i"
 
-	cls
-	echo y1: !y1!
-	echo y_star: !y_star!
-	pause
-
-	set /a "y1=y1-y_star"
+	:: Calculate the target end pixel value
+	set /a "y1=y_star+y0"
 
 	:: Scroll up to ensure that the first element is just below specialmaps_top_pui
 	:: https://stackoverflow.com/questions/39190083/how-can-i-scroll-an-application-using-adb
@@ -827,7 +820,19 @@ if "%errorlevel%" == "0" (
 	:: Initialization of the farming.
 	call :bottomrowselect %battle_fui%
 	call :specialmapsscreen
+
 	call :rectangularlistselect
+	timeout /t 1 /nobreak > nul
+	call :rectangularlistselect
+	timeout /t 1 /nobreak > nul
+	call :rectangularlistselect
+	timeout /t 1 /nobreak > nul
+	call :rectangularlistselect
+	timeout /t 1 /nobreak > nul
+	call :rectangularlistselect
+	timeout /t 1 /nobreak > nul
+	call :rectangularlistselect
+	timeout /t 1 /nobreak > nul
 
 	goto:eof
 
